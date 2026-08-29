@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { articles } from "@/content/articles";
-import RichContent from "@/components/articles/RichContent";
+import { supabase } from "@/lib/supabase";
+
+type ArticleSection = {
+  heading: string;
+  paragraphs?: string[];
+  bullets?: string[];
+};
 
 type ArticlePageProps = {
   params: Promise<{
@@ -9,12 +14,17 @@ type ArticlePageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return articles
-    .filter((article) => article.available)
-    .map((article) => ({
+export async function generateStaticParams() {
+  const { data } = await supabase
+    .from("articles")
+    .select("slug")
+    .eq("published", true);
+
+  return (
+    data?.map((article) => ({
       slug: article.slug,
-    }));
+    })) ?? []
+  );
 }
 
 export default async function ArticlePage({
@@ -22,13 +32,18 @@ export default async function ArticlePage({
 }: ArticlePageProps) {
   const { slug } = await params;
 
-  const article = articles.find(
-    (item) => item.slug === slug && item.available
-  );
+  const { data: article, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("slug", slug)
+    .eq("published", true)
+    .single();
 
-  if (!article) {
+  if (error || !article) {
     notFound();
   }
+
+  const sections = (article.section as ArticleSection[]) ?? [];
 
   return (
     <main className="min-h-screen bg-[#050816] text-white">
@@ -46,7 +61,10 @@ export default async function ArticlePage({
             <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">
               Mindra
             </span>
-            <span className="text-white">Info</span>
+
+            <span className="text-white">
+              Info
+            </span>
           </Link>
 
           <Link
@@ -93,7 +111,7 @@ export default async function ArticlePage({
             <span>•</span>
 
             <span>
-              {new Date(article.publishedAt).toLocaleDateString("en-IN", {
+              {new Date(article.created_at).toLocaleDateString("en-IN", {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
@@ -120,7 +138,7 @@ export default async function ArticlePage({
 
         <div className="mt-12 space-y-14">
 
-          {article.sections.map((section) => (
+          {sections.map((section) => (
 
             <section key={section.heading}>
 
@@ -149,6 +167,7 @@ export default async function ArticlePage({
                       key={bullet}
                       className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-white/75 transition hover:border-cyan-400/20 hover:bg-white/[0.06]"
                     >
+
                       <span className="mr-3 text-cyan-400">
                         ✦
                       </span>
