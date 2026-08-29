@@ -1,6 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import {
+  FormEvent,
+  Suspense,
+  useState,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
@@ -66,14 +70,16 @@ function getValidRole(value: string | null): AdminRole {
   return "owner";
 }
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const searchParams = useSearchParams();
 
   const role = getValidRole(searchParams.get("role"));
   const currentRole = ROLE_INFO[role];
   const isOwner = role === "owner";
 
-  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [mode, setMode] = useState<"login" | "forgot">(
+    "login"
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -93,17 +99,14 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      /*
-       * STEP 1
-       * Authenticate the email + password with Supabase Auth.
-       */
       const {
         data: authData,
         error: loginError,
-      } = await supabaseBrowser.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      } =
+        await supabaseBrowser.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
 
       if (loginError) {
         throw loginError;
@@ -113,13 +116,6 @@ export default function AdminLoginPage() {
         throw new Error("Unable to sign in.");
       }
 
-      /*
-       * STEP 2
-       * Find this authenticated user in our admin_users table.
-       *
-       * IMPORTANT:
-       * The id in admin_users must match the Supabase Auth user id.
-       */
       const {
         data: adminUser,
         error: adminError,
@@ -149,19 +145,6 @@ export default function AdminLoginPage() {
         );
       }
 
-      /*
-       * STEP 3
-       * AUTHORIZATION
-       *
-       * Owner:
-       *   Can access the main admin panel.
-       *
-       * Manager:
-       *   Can access only the manager panels for which
-       *   the corresponding permission is enabled.
-       *
-       * Owner automatically has access to every manager panel.
-       */
       let hasPermission = false;
 
       if (adminUser.is_owner === true) {
@@ -194,9 +177,6 @@ export default function AdminLoginPage() {
             break;
 
           case "owner":
-            /*
-             * Only an owner can enter /admin.
-             */
             hasPermission = false;
             break;
 
@@ -205,11 +185,6 @@ export default function AdminLoginPage() {
         }
       }
 
-      /*
-       * STEP 4
-       * Reject authenticated users who do not have
-       * permission for the requested administration panel.
-       */
       if (!hasPermission) {
         await supabaseBrowser.auth.signOut();
 
@@ -218,30 +193,22 @@ export default function AdminLoginPage() {
         );
       }
 
-      /*
-       * STEP 5
-       * Determine the correct destination.
-       */
-      const destinations: Record<AdminRole, string> = {
+      const destinations: Record<
+        AdminRole,
+        string
+      > = {
         owner: "/admin",
         jobs: "/admin/jobsmanager",
         articles: "/admin/articlesmanager",
         shop: "/admin/shopmanager",
-        technology: "/admin/technologytopicsmanager",
+        technology:
+          "/admin/technologytopicsmanager",
         orders: "/admin/ordersmanager",
       };
 
-      const destination = destinations[role];
-
-      /*
-       * Use a normal browser navigation instead of
-       * router.replace().
-       *
-       * This avoids the "Router action dispatched before
-       * initialization" problem that can happen during
-       * the admin authentication/redirect flow.
-       */
-      window.location.replace(destination);
+      window.location.replace(
+        destinations[role]
+      );
     } catch (err) {
       setError(
         err instanceof Error
@@ -271,19 +238,12 @@ export default function AdminLoginPage() {
         );
       }
 
-      /*
-       * Preserve the current manager role so that a manager
-       * who requests a password reset can return to the
-       * correct login page.
-       */
       const resetUrl =
         `${window.location.origin}/auth/reset-password?role=${encodeURIComponent(
           role
         )}`;
 
-      const {
-        error: resetError,
-      } =
+      const { error: resetError } =
         await supabaseBrowser.auth.resetPasswordForEmail(
           cleanEmail,
           {
@@ -319,7 +279,6 @@ export default function AdminLoginPage() {
     >
       <div className="w-full max-w-md">
 
-        {/* LOGO */}
         <div className="mb-8 text-center">
           <div
             className={`mb-4 inline-flex items-center justify-center rounded-2xl px-5 py-3 shadow-lg ${
@@ -362,7 +321,6 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
-        {/* CARD */}
         <div
           className={`rounded-3xl p-7 sm:p-9 ${
             isOwner
@@ -398,7 +356,6 @@ export default function AdminLoginPage() {
                 onSubmit={handleLogin}
                 className="space-y-5"
               >
-                {/* EMAIL */}
                 <div>
                   <label
                     htmlFor="email"
@@ -421,7 +378,6 @@ export default function AdminLoginPage() {
                   />
                 </div>
 
-                {/* PASSWORD */}
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <label
@@ -478,21 +434,18 @@ export default function AdminLoginPage() {
                   </div>
                 </div>
 
-                {/* ERROR */}
                 {error && (
                   <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-5 text-red-700">
                     {error}
                   </div>
                 )}
 
-                {/* MESSAGE */}
                 {message && (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-5 text-emerald-700">
                     {message}
                   </div>
                 )}
 
-                {/* LOGIN */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -521,7 +474,6 @@ export default function AdminLoginPage() {
                 onSubmit={handleForgotPassword}
                 className="space-y-5"
               >
-                {/* EMAIL */}
                 <div>
                   <label
                     htmlFor="reset-email"
@@ -544,21 +496,18 @@ export default function AdminLoginPage() {
                   />
                 </div>
 
-                {/* ERROR */}
                 {error && (
                   <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-5 text-red-700">
                     {error}
                   </div>
                 )}
 
-                {/* MESSAGE */}
                 {message && (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-5 text-emerald-700">
                     {message}
                   </div>
                 )}
 
-                {/* SEND */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -569,7 +518,6 @@ export default function AdminLoginPage() {
                     : "Send Reset Link"}
                 </button>
 
-                {/* BACK */}
                 <button
                   type="button"
                   onClick={() => {
@@ -586,7 +534,6 @@ export default function AdminLoginPage() {
           )}
         </div>
 
-        {/* WEBSITE */}
         <div className="mt-6 text-center">
           <a
             href="/"
@@ -598,5 +545,30 @@ export default function AdminLoginPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#050816] px-4 text-white">
+          <div className="text-center">
+            <div className="text-2xl font-black">
+              <span className="text-cyan-400">
+                Mindra
+              </span>
+              <span>Info</span>
+            </div>
+
+            <p className="mt-3 text-sm text-white/50">
+              Loading admin login...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <AdminLoginContent />
+    </Suspense>
   );
 }

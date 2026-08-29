@@ -2,12 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
 import SiteHeader from "@/components/SiteHeader";
-
-// Use the worker bundled with the installed pdfjs-dist package.
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 type PreviewPage = {
   pageNumber: number;
@@ -31,6 +27,14 @@ export default function PdfToJpgPage() {
       setLoading(true);
       setFile(selectedFile);
 
+      // IMPORTANT:
+      // pdfjs-dist is loaded only in the browser.
+      // This prevents DOMMatrix errors during Next.js prerendering.
+      const pdfjsLib = await import("pdfjs-dist");
+
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
       const arrayBuffer = await selectedFile.arrayBuffer();
 
       const pdf = await pdfjsLib.getDocument({
@@ -39,7 +43,11 @@ export default function PdfToJpgPage() {
 
       const renderedPages: PreviewPage[] = [];
 
-      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      for (
+        let pageNumber = 1;
+        pageNumber <= pdf.numPages;
+        pageNumber++
+      ) {
         const page = await pdf.getPage(pageNumber);
 
         const viewport = page.getViewport({
@@ -59,10 +67,13 @@ export default function PdfToJpgPage() {
         await page.render({
           canvasContext: context,
           viewport,
-          canvas: canvas,
+          canvas,
         }).promise;
 
-        const imageUrl = canvas.toDataURL("image/jpeg", quality);
+        const imageUrl = canvas.toDataURL(
+          "image/jpeg",
+          quality
+        );
 
         renderedPages.push({
           pageNumber,
@@ -72,11 +83,14 @@ export default function PdfToJpgPage() {
 
       setPages(renderedPages);
     } catch (err) {
-      console.error(err);
+      console.error("PDF TO JPG ERROR:", err);
+
       setError(
         "Unable to read or render this PDF. The file may be damaged, protected, or unsupported."
       );
+
       setFile(null);
+      setPages([]);
     } finally {
       setLoading(false);
     }
@@ -144,7 +158,7 @@ export default function PdfToJpgPage() {
 
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(err);
+      console.error("ZIP ERROR:", err);
       setError("Unable to create the ZIP file.");
     } finally {
       setConverting(false);
@@ -181,8 +195,9 @@ export default function PdfToJpgPage() {
             </h1>
 
             <p className="mt-5 text-lg leading-8 text-gray-600">
-              Convert PDF pages into high-quality JPG images. Download
-              individual pages or download all pages together as a ZIP file.
+              Convert PDF pages into high-quality JPG images.
+              Download individual pages or download all pages
+              together as a ZIP file.
             </p>
           </div>
         </div>
@@ -201,8 +216,8 @@ export default function PdfToJpgPage() {
             </h2>
 
             <p className="mt-3 max-w-lg text-gray-500">
-              Select a PDF and MindraInfo will convert each page into a JPG
-              image directly in your browser.
+              Select a PDF and MindraInfo will convert each page
+              into a JPG image directly in your browser.
             </p>
 
             <span className="mt-7 rounded-xl bg-orange-500 px-7 py-3.5 font-bold text-white transition hover:bg-orange-600">
@@ -250,8 +265,13 @@ export default function PdfToJpgPage() {
                 </div>
               ) : error ? (
                 <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6 text-red-600">
-                  <p className="font-bold">Conversion failed</p>
-                  <p className="mt-2 text-sm">{error}</p>
+                  <p className="font-bold">
+                    Conversion failed
+                  </p>
+
+                  <p className="mt-2 text-sm">
+                    {error}
+                  </p>
                 </div>
               ) : (
                 <div className="mt-8 grid gap-6 sm:grid-cols-2">
@@ -315,7 +335,9 @@ export default function PdfToJpgPage() {
                   max="1"
                   step="0.05"
                   value={quality}
-                  onChange={(e) => setQuality(Number(e.target.value))}
+                  onChange={(e) =>
+                    setQuality(Number(e.target.value))
+                  }
                   className="mt-4 w-full accent-orange-500"
                 />
               </div>
@@ -338,12 +360,15 @@ export default function PdfToJpgPage() {
                   max="3"
                   step="0.25"
                   value={scale}
-                  onChange={(e) => setScale(Number(e.target.value))}
+                  onChange={(e) =>
+                    setScale(Number(e.target.value))
+                  }
                   className="mt-4 w-full accent-orange-500"
                 />
 
                 <p className="mt-2 text-xs leading-5 text-gray-400">
-                  Higher resolution produces larger and sharper JPG files.
+                  Higher resolution produces larger and sharper
+                  JPG files.
                 </p>
               </div>
 
@@ -352,17 +377,23 @@ export default function PdfToJpgPage() {
                 type="button"
                 disabled={loading}
                 onClick={() => {
-                  if (file) loadPDF(file);
+                  if (file) {
+                    loadPDF(file);
+                  }
                 }}
                 className="mt-8 w-full rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-black text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
               >
-                {loading ? "Rendering..." : "Apply Settings"}
+                {loading
+                  ? "Rendering..."
+                  : "Apply Settings"}
               </button>
 
               {/* DOWNLOAD ALL */}
               <button
                 type="button"
-                disabled={pages.length === 0 || converting}
+                disabled={
+                  pages.length === 0 || converting
+                }
                 onClick={downloadAllAsZip}
                 className="mt-3 w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-black text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
               >
@@ -374,7 +405,9 @@ export default function PdfToJpgPage() {
               {/* PRIVACY */}
               <div className="mt-7 rounded-2xl bg-green-50 p-4">
                 <div className="flex gap-3">
-                  <span className="text-lg">🔒</span>
+                  <span className="text-lg">
+                    🔒
+                  </span>
 
                   <div>
                     <p className="text-sm font-bold text-green-700">
@@ -382,8 +415,9 @@ export default function PdfToJpgPage() {
                     </p>
 
                     <p className="mt-1 text-xs leading-5 text-green-700/70">
-                      PDF processing happens in your browser. Your file is not
-                      uploaded to or stored in the MindraInfo database.
+                      PDF processing happens in your browser.
+                      Your file is not uploaded to or stored in
+                      the MindraInfo database.
                     </p>
                   </div>
                 </div>
@@ -417,8 +451,8 @@ export default function PdfToJpgPage() {
               </h3>
 
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Every PDF page is rendered as an image so you can check the
-                result before downloading.
+                Every PDF page is rendered as an image so you
+                can check the result before downloading.
               </p>
             </div>
 
@@ -430,8 +464,8 @@ export default function PdfToJpgPage() {
               </h3>
 
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Download individual pages or all converted pages as one ZIP
-                file.
+                Download individual pages or all converted
+                pages as one ZIP file.
               </p>
             </div>
           </div>
@@ -441,7 +475,9 @@ export default function PdfToJpgPage() {
       {/* FOOTER */}
       <footer className="border-t border-gray-200 bg-[#f7f7f4]">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-gray-500 md:flex-row">
-          <p>© 2026 MindraInfo. All rights reserved.</p>
+          <p>
+            © 2026 MindraInfo. All rights reserved.
+          </p>
 
           <Link
             href="/tools/pdf"

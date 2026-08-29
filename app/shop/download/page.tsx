@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 type DownloadItem = {
   productId: number;
@@ -10,7 +10,7 @@ type DownloadItem = {
   quantity: number;
 };
 
-export default function DownloadPage() {
+function DownloadPageContent() {
   const searchParams = useSearchParams();
 
   const orderId = searchParams.get("orderId");
@@ -60,9 +60,7 @@ export default function DownloadPage() {
       <div className="mx-auto max-w-3xl">
 
         {/* HEADER */}
-
         <div className="text-center">
-
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-cyan-400">
             MindraInfo Shop
           </p>
@@ -74,11 +72,9 @@ export default function DownloadPage() {
           <p className="mt-3 text-white/45">
             Your payment was successful. Your digital product is ready.
           </p>
-
         </div>
 
         {/* ORDER */}
-
         <section className="mt-10 rounded-3xl border border-white/10 bg-white/[0.04] p-6 md:p-8">
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -100,13 +96,11 @@ export default function DownloadPage() {
           </div>
 
           {/* TEST PRODUCT */}
-
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
 
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
               <div>
-
                 <h2 className="text-xl font-bold">
                   Test Product
                 </h2>
@@ -114,7 +108,6 @@ export default function DownloadPage() {
                 <p className="mt-1 text-sm text-white/40">
                   Digital Product
                 </p>
-
               </div>
 
               <button
@@ -133,7 +126,6 @@ export default function DownloadPage() {
           </div>
 
           {/* MESSAGE */}
-
           {message && (
             <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-center text-sm text-red-300">
               {message}
@@ -143,7 +135,6 @@ export default function DownloadPage() {
         </section>
 
         {/* BACK */}
-
         <div className="mt-8 text-center">
 
           <Link
@@ -157,5 +148,21 @@ export default function DownloadPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function DownloadPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#050816] text-white">
+          <p className="text-white/50">
+            Loading download page...
+          </p>
+        </main>
+      }
+    >
+      <DownloadPageContent />
+    </Suspense>
   );
 }
