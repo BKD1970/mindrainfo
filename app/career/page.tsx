@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
 
 const careerPaths = [
   {
@@ -58,30 +59,8 @@ export default function CareerPage() {
   return (
     <main className="min-h-screen bg-[#f7f7f4] text-gray-900">
 
-      {/* =========================
-          HEADER
-      ========================== */}
-
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-
-          <Link
-            href="/"
-            className="text-2xl font-black tracking-tight"
-          >
-            <span className="text-blue-600">Mindra</span>
-            <span className="text-gray-900">Info</span>
-          </Link>
-
-          <Link
-            href="/"
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-gray-100"
-          >
-            ← Home
-          </Link>
-
-        </div>
-      </header>
+      {/* HEADER */}
+<SiteHeader />
 
       {/* =========================
           HERO

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import SiteHeader from "@/components/SiteHeader";
 
 type Job = {
   id: number;
@@ -14,87 +16,9 @@ type Job = {
   category: string;
   skills: string[];
   description: string;
-  companyInitial: string;
+  company_initial: string;
   applyUrl: string | null;
 };
-
-const jobs: Job[] = [
-  {
-    id: 1,
-    company: "MindraInfo",
-    title: "Junior Data Analyst",
-    location: "India",
-    type: "Full-time",
-    experience: "0–2 years",
-    posted: "Featured",
-    category: "Data Analytics",
-    skills: ["Excel", "SQL", "Power BI"],
-    description:
-      "Analyze business data, prepare reports and dashboards, and communicate useful insights.",
-    companyInitial: "M",
-    applyUrl: null,
-  },
-  {
-    id: 2,
-    company: "MindraInfo",
-    title: "Frontend Developer",
-    location: "Remote",
-    type: "Full-time",
-    experience: "0–2 years",
-    posted: "Featured",
-    category: "Software",
-    skills: ["HTML", "CSS", "JavaScript"],
-    description:
-      "Build responsive web interfaces and work with modern frontend technologies.",
-    companyInitial: "M",
-    applyUrl: null,
-  },
-  {
-    id: 3,
-    company: "MindraInfo",
-    title: "AI Intern",
-    location: "India",
-    type: "Internship",
-    experience: "Freshers",
-    posted: "Featured",
-    category: "AI",
-    skills: ["Python", "AI", "Prompting"],
-    description:
-      "Assist with AI experiments, research, automation workflows and prototype development.",
-    companyInitial: "M",
-    applyUrl: null,
-  },
-  {
-    id: 4,
-    company: "MindraInfo",
-    title: "Junior Software Developer",
-    location: "Bengaluru",
-    type: "Full-time",
-    experience: "0–1 years",
-    posted: "Featured",
-    category: "Software",
-    skills: ["Python", "JavaScript", "Git"],
-    description:
-      "Develop and maintain software applications while working with modern development tools.",
-    companyInitial: "M",
-    applyUrl: null,
-  },
-  {
-    id: 5,
-    company: "MindraInfo",
-    title: "Business Analyst",
-    location: "India",
-    type: "Full-time",
-    experience: "1–3 years",
-    posted: "Featured",
-    category: "Data Analytics",
-    skills: ["Excel", "SQL", "Analytics"],
-    description:
-      "Analyze business requirements, prepare reports and help teams make data-driven decisions.",
-    companyInitial: "M",
-    applyUrl: null,
-  },
-];
 
 const categories = [
   "All Jobs",
@@ -111,6 +35,30 @@ export default function JobsPage() {
 
   const [selectedCategory, setSelectedCategory] = useState("All Jobs");
 
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadJobs() {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+  console.error("Error loading jobs:", error);
+} else {
+  console.log("PUBLISHED JOBS FROM SUPABASE:", data);
+  setJobs(data ?? []);
+}
+      setLoading(false);
+    }
+
+    loadJobs();
+  }, []);
+
+  
   const scrollLeft = () => {
     carouselRef.current?.scrollBy({
       left: -420,
@@ -149,32 +97,8 @@ export default function JobsPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f7f4] text-gray-900">
 
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
-
-      <header className="relative z-20 border-b border-gray-200 bg-white/85 backdrop-blur-md">
-
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-
-          <Link
-            href="/"
-            className="text-2xl font-black tracking-tight"
-          >
-            <span className="text-emerald-600">Mindra</span>
-            <span>Info</span>
-          </Link>
-
-          <Link
-            href="/"
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-gray-100"
-          >
-            ← Home
-          </Link>
-
-        </div>
-
-      </header>
+      {/* HEADER */}
+<SiteHeader />
 
       {/* =====================================================
           HERO
@@ -359,7 +283,7 @@ export default function JobsPage() {
                 <div className="flex items-start justify-between">
 
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-xl font-black text-emerald-600">
-                    {job.companyInitial}
+                    {job.company_initial}
                   </div>
 
                   <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">

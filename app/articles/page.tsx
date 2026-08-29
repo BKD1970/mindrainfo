@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { articles } from "@/content/articles";
-
-
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import SiteHeader from "@/components/SiteHeader";
 
 const categories = [
   "All",
@@ -18,51 +17,44 @@ const categories = [
 
 export default function ArticlesPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [supabaseArticles, setSupabaseArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+  async function fetchArticles() {
+    const { data, error } = await supabase
+      .from("articles")
+      .select("*")
+      .eq("published", true)
+      .order("created_at", { ascending: false });
 
-  const filteredArticles =
-    selectedCategory === "All"
-      ? articles
-      : articles.filter(
-          (article) => article.category === selectedCategory
-        );
+    if (error) {
+      console.error("Error fetching articles:", error);
+    } else {
+      setSupabaseArticles(data || []);
+    }
+
+    setLoading(false);
+  }
+
+  fetchArticles();
+}, []);
+
+const allArticles = supabaseArticles;
+
+const filteredArticles =
+  selectedCategory === "All"
+    ? allArticles
+    : allArticles.filter(
+        (article) => article.category === selectedCategory
+      );
 
   return (
     <main className="min-h-screen bg-[#050816] text-white">
 
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
+      {/* HEADER */}
+<SiteHeader />
 
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050816]/80 backdrop-blur-xl">
-
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-
-          <Link href="/" className="text-2xl font-black">
-
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">
-              Mindra
-            </span>
-
-            <span className="text-white">
-              Info
-            </span>
-
-          </Link>
-
-          <Link
-            href="/"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-          >
-            ← Home
-          </Link>
-
-        </div>
-
-      </header>
-
-      {/* =====================================================
-          HERO
-      ====================================================== */}
+      {/* HERO */}
 
       <section className="relative overflow-hidden">
 
@@ -77,15 +69,11 @@ export default function ArticlesPage() {
           </p>
 
           <h1 className="mx-auto mt-5 max-w-4xl text-5xl font-black tracking-tight md:text-7xl">
-
             Learn something useful.
-
             <br />
-
             <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent">
               Every day.
             </span>
-
           </h1>
 
           <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-white/55">
@@ -94,12 +82,9 @@ export default function ArticlesPage() {
           </p>
 
         </div>
-
       </section>
 
-      {/* =====================================================
-          CATEGORY FILTER
-      ====================================================== */}
+      {/* CATEGORY FILTER */}
 
       <section className="border-y border-white/10 bg-white/[0.02]">
 
@@ -131,12 +116,9 @@ export default function ArticlesPage() {
           </div>
 
         </div>
-
       </section>
 
-      {/* =====================================================
-          ARTICLES
-      ====================================================== */}
+      {/* ARTICLES */}
 
       <section className="mx-auto max-w-7xl px-6 py-20">
 
@@ -176,7 +158,7 @@ export default function ArticlesPage() {
             {filteredArticles.map((article) => (
 
               <article
-                key={article.title}
+                key={article.slug}
                 className="group flex min-h-[390px] flex-col rounded-3xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur-xl transition duration-300 hover:-translate-y-2 hover:border-cyan-400/20 hover:bg-white/[0.06]"
               >
 
@@ -198,7 +180,7 @@ export default function ArticlesPage() {
 
                 <div className="mt-7">
 
-                  {article.available ? (
+                  {article.available !== false ? (
 
                     <Link
                       href={`/articles/${article.slug}`}
@@ -224,10 +206,6 @@ export default function ArticlesPage() {
           </div>
 
         ) : (
-
-          /* =================================================
-             NO RESULTS
-          ================================================== */
 
           <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.04] p-16 text-center">
 
@@ -258,9 +236,7 @@ export default function ArticlesPage() {
 
       </section>
 
-      {/* =====================================================
-          CTA
-      ====================================================== */}
+      {/* CTA */}
 
       <section className="mx-auto max-w-5xl px-6 pb-24">
 
@@ -290,9 +266,7 @@ export default function ArticlesPage() {
 
       </section>
 
-      {/* =====================================================
-          FOOTER
-      ====================================================== */}
+      {/* FOOTER */}
 
       <footer className="border-t border-white/10">
 
@@ -304,7 +278,7 @@ export default function ArticlesPage() {
 
           <Link
             href="/"
-            className="transition hover:text-white"
+            className="font-semibold text-cyan-400 hover:text-cyan-300"
           >
             Back to Home →
           </Link>
@@ -316,3 +290,4 @@ export default function ArticlesPage() {
     </main>
   );
 }
+

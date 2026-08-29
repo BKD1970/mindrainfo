@@ -1,38 +1,45 @@
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
 
 const technologyTopics = [
   {
     title: "Web Development",
+    slug: "web-development" ,
     icon: "🌐",
     description:
       "Learn how websites and web applications are designed, developed and deployed.",
   },
   {
     title: "Programming",
+    slug: "programming",
     icon: "💻",
     description:
       "Understand programming fundamentals and explore languages used to build modern software.",
   },
   {
     title: "Cloud Computing",
+    slug: "cloud-computing",
     icon: "☁️",
     description:
       "Learn how cloud platforms provide computing power, storage, databases and other services.",
   },
   {
     title: "Cybersecurity",
+    slug: "cybersecurity",
     icon: "🔐",
     description:
       "Understand the fundamentals of protecting systems, networks, applications and data.",
   },
   {
     title: "Databases",
+    slug: "databases",
     icon: "🗄️",
     description:
       "Learn how information is stored, organized, queried and managed in modern applications.",
   },
   {
     title: "DevOps & Deployment",
+    slug: "devops-deployment",
     icon: "⚡",
     description:
       "Explore Git, CI/CD, hosting, containers and the technologies used to deliver software.",
@@ -87,32 +94,8 @@ export default function TechnologyPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f7f4] text-gray-900">
 
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
-
-      <header className="relative z-20 border-b border-gray-200 bg-white/80 backdrop-blur-md">
-
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-
-          <Link
-            href="/"
-            className="text-2xl font-black tracking-tight"
-          >
-            <span className="text-indigo-600">Mindra</span>
-            <span>Info</span>
-          </Link>
-
-          <Link
-            href="/"
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-gray-100"
-          >
-            ← Home
-          </Link>
-
-        </div>
-
-      </header>
+      {/* HEADER */}
+<SiteHeader />
 
       {/* =====================================================
           HERO
@@ -221,37 +204,34 @@ export default function TechnologyPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 
           {technologyTopics.map((topic) => (
+  <Link
+    key={topic.title}
+    href={`/technology/${topic.slug}`}
+    className="group relative block overflow-hidden rounded-3xl border border-gray-200 bg-white p-7 transition duration-300 hover:-translate-y-2 hover:border-indigo-300 hover:shadow-xl"
+  >
+    <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-indigo-200/30 blur-2xl transition group-hover:bg-indigo-300/50" />
 
-            <div
-              key={topic.title}
-              className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-7 transition duration-300 hover:-translate-y-2 hover:border-indigo-300 hover:shadow-xl"
-            >
+    <div className="relative z-10">
 
-              <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-indigo-200/30 blur-2xl transition group-hover:bg-indigo-300/50" />
+      <div className="text-4xl transition duration-300 group-hover:scale-110">
+        {topic.icon}
+      </div>
 
-              <div className="relative z-10">
+      <h3 className="mt-6 text-2xl font-bold">
+        {topic.title}
+      </h3>
 
-                <div className="text-4xl transition duration-300 group-hover:scale-110">
-                  {topic.icon}
-                </div>
+      <p className="mt-3 text-sm leading-7 text-gray-600">
+        {topic.description}
+      </p>
 
-                <h3 className="mt-6 text-2xl font-bold">
-                  {topic.title}
-                </h3>
+      <span className="mt-6 inline-block text-sm font-bold text-indigo-600">
+        Explore →
+      </span>
 
-                <p className="mt-3 text-sm leading-7 text-gray-600">
-                  {topic.description}
-                </p>
-
-                <span className="mt-6 inline-block text-sm font-bold text-indigo-600">
-                  Explore →
-                </span>
-
-              </div>
-
-            </div>
-
-          ))}
+    </div>
+  </Link>
+))}
 
         </div>
 

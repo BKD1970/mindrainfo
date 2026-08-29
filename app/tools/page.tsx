@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import SiteHeader from "@/components/SiteHeader";
 
 const categories = [
   "All Tools",
@@ -16,23 +17,25 @@ const categories = [
 
 const tools = [
   {
-    id: 1,
-    name: "PDF Tools",
-    icon: "📄",
-    category: "PDF",
-    description:
-      "Useful tools for working with PDF files, documents and conversions.",
-    status: "Coming Soon",
-  },
+  id: 1,
+  name: "PDF Tools",
+  icon: "📄",
+  category: "PDF",
+  description:
+    "Merge, split, compress, rotate, organize and convert PDF files quickly.",
+  status: "Available",
+  target: "/tools/pdf",
+},
   {
-    id: 2,
-    name: "Image Compressor",
-    icon: "🖼️",
-    category: "Images",
-    description:
-      "Reduce image file size while maintaining good visual quality.",
-    status: "Coming Soon",
-  },
+  id: 2,
+  name: "Image Compressor",
+  icon: "🖼️",
+  category: "Images",
+  description:
+    "Reduce image file size while maintaining good visual quality.",
+  target: "/tools/image-compressor",
+  status: "Available",
+},
   {
     id: 3,
     name: "Text Formatter",
@@ -331,32 +334,8 @@ export default function ToolsPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f7f4] text-gray-900">
 
-      {/* ======================================================
-          HEADER
-      ======================================================= */}
-
-      <header className="relative z-20 border-b border-gray-200 bg-white/90 backdrop-blur-md">
-
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-
-          <Link
-            href="/"
-            className="text-2xl font-black tracking-tight"
-          >
-            <span className="text-orange-500">Mindra</span>
-            <span>Info</span>
-          </Link>
-
-          <Link
-            href="/"
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-gray-100"
-          >
-            ← Home
-          </Link>
-
-        </div>
-
-      </header>
+      {/* HEADER */}
+<SiteHeader />
 
       {/* ======================================================
           HERO
@@ -497,24 +476,29 @@ export default function ToolsPage() {
                 </p>
 
                 {tool.target ? (
-
-                  <a
-                    href={`#${tool.target}`}
-                    className="mt-7 flex w-full items-center justify-center rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-600"
-                  >
-                    Open Tool →
-                  </a>
-
-                ) : (
-
-                  <button
-                    disabled
-                    className="mt-7 w-full cursor-not-allowed rounded-xl bg-gray-100 px-5 py-3.5 text-sm font-bold text-gray-400"
-                  >
-                    Coming Soon
-                  </button>
-
-                )}
+  tool.target.startsWith("/") ? (
+    <Link
+      href={tool.target}
+      className="mt-7 flex w-full items-center justify-center rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-600"
+    >
+      Open Tool →
+    </Link>
+  ) : (
+    <a
+      href={`#${tool.target}`}
+      className="mt-7 flex w-full items-center justify-center rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-600"
+    >
+      Open Tool →
+    </a>
+  )
+) : (
+  <button
+    disabled
+    className="mt-7 w-full cursor-not-allowed rounded-xl bg-gray-100 px-5 py-3.5 text-sm font-bold text-gray-400"
+  >
+    Coming Soon
+  </button>
+)}
 
               </div>
 
