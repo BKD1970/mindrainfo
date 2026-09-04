@@ -62,25 +62,20 @@ function createSlug(value: string) {
 }
 
 export default function ArticlesManagerPage() {
-  async function handleSignOut() {
-    /*
-     * Use the same SSR-compatible browser client
-     * used by the admin login system.
-     */
-    await supabaseBrowser.auth.signOut();
-
-    /*
-     * Full browser navigation ensures the logged-out
-     * session is picked up by the server/proxy.
-     */
-    window.location.replace("/admin/login?role=articles");
-  }
-
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [form, setForm] = useState(emptyForm);
+
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  async function handleSignOut() {
+    await supabaseBrowser.auth.signOut();
+
+    window.location.replace("/admin/login?role=articles");
+  }
 
   async function loadArticles() {
     setLoading(true);
@@ -277,8 +272,16 @@ export default function ArticlesManagerPage() {
   }
 
   function resetForm() {
+    setEditingId(null);
+
     setForm({
-      ...emptyForm,
+      title: "",
+      slug: "",
+      excerpt: "",
+      description: "",
+      category: "Data Analytics",
+      image_url: "",
+      icon: "📚",
       sections: [
         {
           heading: "",
@@ -289,6 +292,49 @@ export default function ArticlesManagerPage() {
     });
 
     setMessage("");
+  }
+
+  function editArticle(article: Article) {
+    setEditingId(article.id);
+
+    setForm({
+      title: article.title || "",
+      slug: article.slug || "",
+      excerpt: article.excerpt || "",
+      description: article.description || "",
+      category: article.category || "Data Analytics",
+      image_url: article.image_url || "",
+      icon: article.icon || "📚",
+      sections:
+        article.section && article.section.length > 0
+          ? article.section.map((section) => ({
+              heading: section.heading || "",
+              paragraphs:
+                section.paragraphs &&
+                section.paragraphs.length > 0
+                  ? [...section.paragraphs]
+                  : [""],
+              bullets: section.bullets
+                ? [...section.bullets]
+                : [],
+            }))
+          : [
+              {
+                heading: "",
+                paragraphs: [""],
+                bullets: [],
+              },
+            ],
+    });
+
+    setMessage(
+      `Editing: ${article.title}`
+    );
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   async function saveArticle() {
@@ -327,7 +373,54 @@ export default function ArticlesManagerPage() {
       return;
     }
 
-    const { error } = await supabaseBrowser
+    /* =====================================================
+       EDIT EXISTING ARTICLE
+    ====================================================== */
+
+    if (editingId !== null) {
+      const { data, error } = await supabaseBrowser
+        .from("articles")
+        .update({
+          title: form.title.trim(),
+          slug,
+          excerpt: form.excerpt.trim(),
+          content: "",
+          category: form.category,
+          image_url: form.image_url.trim() || null,
+          description: form.description.trim(),
+          icon: form.icon.trim() || "📚",
+          section: cleanSections,
+        })
+        .eq("id", editingId)
+        .select("*")
+        .single();
+
+      if (error) {
+        console.error("Error updating article:", error);
+        setMessage(`Error updating article: ${error.message}`);
+        setSaving(false);
+        return;
+      }
+
+      if (!data) {
+        setMessage("Article update could not be verified.");
+        setSaving(false);
+        return;
+      }
+
+      setMessage("Article updated successfully.");
+      resetForm();
+      await loadArticles();
+
+      setSaving(false);
+      return;
+    }
+
+    /* =====================================================
+       CREATE NEW ARTICLE
+    ====================================================== */
+
+    const { data, error } = await supabaseBrowser
       .from("articles")
       .insert({
         title: form.title.trim(),
@@ -340,29 +433,48 @@ export default function ArticlesManagerPage() {
         description: form.description.trim(),
         icon: form.icon.trim() || "📚",
         section: cleanSections,
-      });
+      })
+      .select("*")
+      .single();
 
     if (error) {
       console.error("Error saving article:", error);
       setMessage(`Error: ${error.message}`);
-    } else {
-      setMessage("Article saved successfully as a draft.");
-      resetForm();
-      await loadArticles();
+      setSaving(false);
+      return;
     }
+
+    if (!data) {
+      setMessage("Article could not be saved.");
+      setSaving(false);
+      return;
+    }
+
+    setMessage("Article saved successfully as a draft.");
+    resetForm();
+    await loadArticles();
 
     setSaving(false);
   }
 
   async function publishArticle(id: number) {
-    const { error } = await supabaseBrowser
+    setMessage("");
+
+    const { data, error } = await supabaseBrowser
       .from("articles")
       .update({ published: true })
-      .eq("id", id);
+      .eq("id", id)
+      .select("*")
+      .single();
 
     if (error) {
       console.error("Error publishing article:", error);
-      setMessage(`Error: ${error.message}`);
+      setMessage(`Error publishing article: ${error.message}`);
+      return;
+    }
+
+    if (!data) {
+      setMessage("Publish could not be verified.");
       return;
     }
 
@@ -371,18 +483,77 @@ export default function ArticlesManagerPage() {
   }
 
   async function unpublishArticle(id: number) {
-    const { error } = await supabaseBrowser
+    setMessage("");
+
+    const { data, error } = await supabaseBrowser
       .from("articles")
       .update({ published: false })
-      .eq("id", id);
+      .eq("id", id)
+      .select("*")
+      .single();
 
     if (error) {
       console.error("Error unpublishing article:", error);
-      setMessage(`Error: ${error.message}`);
+      setMessage(`Error unpublishing article: ${error.message}`);
+      return;
+    }
+
+    if (!data) {
+      setMessage("Draft change could not be verified.");
       return;
     }
 
     setMessage("Article moved back to draft.");
+    await loadArticles();
+  }
+
+  async function deleteArticle(id: number) {
+    const article = articles.find(
+      (item) => item.id === id
+    );
+
+    if (!article) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${article.title}" permanently?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+    setMessage("");
+
+    const { data, error } = await supabaseBrowser
+      .from("articles")
+      .delete()
+      .eq("id", id)
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("Error deleting article:", error);
+      setMessage(`Error deleting article: ${error.message}`);
+      setDeletingId(null);
+      return;
+    }
+
+    if (!data) {
+      setMessage("Article deletion could not be verified.");
+      setDeletingId(null);
+      return;
+    }
+
+    if (editingId === id) {
+      resetForm();
+    }
+
+    setMessage("Article deleted successfully.");
+    setDeletingId(null);
+
     await loadArticles();
   }
 
@@ -450,15 +621,28 @@ export default function ArticlesManagerPage() {
             </div>
 
             <h2 className="mt-5 text-4xl font-black tracking-tight md:text-6xl">
-              Create something
-              <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">
-                worth reading.
-              </span>
+
+              {editingId !== null ? (
+                <>
+                  Edit your
+                  <span className="block bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
+                    article.
+                  </span>
+                </>
+              ) : (
+                <>
+                  Create something
+                  <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    worth reading.
+                  </span>
+                </>
+              )}
+
             </h2>
 
             <p className="mt-5 max-w-2xl text-base leading-7 text-white/50">
-              Create structured MindraInfo articles without changing the
-              existing article content or public article experience.
+              Create and manage MindraInfo articles without changing
+              the existing public article experience.
             </p>
 
           </div>
@@ -473,6 +657,32 @@ export default function ArticlesManagerPage() {
           </div>
         )}
 
+        {/* EDIT MODE BANNER */}
+
+        {editingId !== null && (
+          <div className="mb-8 flex flex-col justify-between gap-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-5 py-4 sm:flex-row sm:items-center">
+
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">
+                Editing Article
+              </p>
+
+              <p className="mt-1 text-sm font-semibold text-white/70">
+                Changes will update the existing article.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-bold text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              Cancel Editing
+            </button>
+
+          </div>
+        )}
+
         {/* EDITOR */}
 
         <section className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_430px]">
@@ -484,13 +694,17 @@ export default function ArticlesManagerPage() {
             <div className="flex flex-col justify-between gap-5 border-b border-white/10 pb-7 md:flex-row md:items-center">
 
               <div>
+
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-400">
-                  New Article
+                  {editingId !== null
+                    ? "Edit Article"
+                    : "New Article"}
                 </p>
 
                 <h3 className="mt-2 text-2xl font-black">
                   Article details
                 </h3>
+
               </div>
 
               <button
@@ -542,14 +756,18 @@ export default function ArticlesManagerPage() {
                 <input
                   value={form.slug}
                   onChange={(e) =>
-                    updateForm("slug", createSlug(e.target.value))
+                    updateForm(
+                      "slug",
+                      createSlug(e.target.value)
+                    )
                   }
                   placeholder="excel-skills-data-analyst"
                   className="mt-2 w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4 text-white/80 outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.04]"
                 />
 
                 <p className="mt-2 text-xs text-white/30">
-                  Public URL: /articles/{form.slug || "your-article-slug"}
+                  Public URL: /articles/
+                  {form.slug || "your-article-slug"}
                 </p>
               </div>
 
@@ -565,12 +783,17 @@ export default function ArticlesManagerPage() {
                   <select
                     value={form.category}
                     onChange={(e) =>
-                      updateForm("category", e.target.value)
+                      updateForm(
+                        "category",
+                        e.target.value
+                      )
                     }
                     className="mt-2 w-full rounded-2xl border border-white/10 bg-[#111525] px-5 py-4 text-white outline-none transition focus:border-cyan-400/50"
                   >
                     {categories.map((category) => (
-                      <option key={category}>{category}</option>
+                      <option key={category}>
+                        {category}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -583,7 +806,10 @@ export default function ArticlesManagerPage() {
                   <input
                     value={form.icon}
                     onChange={(e) =>
-                      updateForm("icon", e.target.value)
+                      updateForm(
+                        "icon",
+                        e.target.value
+                      )
                     }
                     maxLength={4}
                     placeholder="📚"
@@ -603,7 +829,10 @@ export default function ArticlesManagerPage() {
                 <textarea
                   value={form.description}
                   onChange={(e) =>
-                    updateForm("description", e.target.value)
+                    updateForm(
+                      "description",
+                      e.target.value
+                    )
                   }
                   rows={3}
                   placeholder="Short description shown near the article title."
@@ -621,7 +850,10 @@ export default function ArticlesManagerPage() {
                 <textarea
                   value={form.excerpt}
                   onChange={(e) =>
-                    updateForm("excerpt", e.target.value)
+                    updateForm(
+                      "excerpt",
+                      e.target.value
+                    )
                   }
                   rows={3}
                   placeholder="Short summary for article cards and listings."
@@ -639,10 +871,13 @@ export default function ArticlesManagerPage() {
                 <input
                   value={form.image_url}
                   onChange={(e) =>
-                    updateForm("image_url", e.target.value)
+                    updateForm(
+                      "image_url",
+                      e.target.value
+                    )
                   }
                   placeholder="https://..."
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4 text-white/80 outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.04]"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4 text-white/80 outline-none transition placeholder:text-white/20 focus:border-cyan-400/50"
                 />
               </div>
 
@@ -653,6 +888,7 @@ export default function ArticlesManagerPage() {
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
 
                   <div>
+
                     <p className="text-xs font-black uppercase tracking-[0.25em] text-purple-400">
                       Content Builder
                     </p>
@@ -662,9 +898,10 @@ export default function ArticlesManagerPage() {
                     </h3>
 
                     <p className="mt-2 text-sm leading-6 text-white/40">
-                      Each section can contain a heading, paragraphs and
-                      bullet points.
+                      Each section can contain a heading,
+                      paragraphs and bullet points.
                     </p>
+
                   </div>
 
                   <button
@@ -679,182 +916,130 @@ export default function ArticlesManagerPage() {
 
                 <div className="mt-6 space-y-6">
 
-                  {form.sections.map((section, sectionIndex) => (
+                  {form.sections.map(
+                    (section, sectionIndex) => (
 
-                    <div
-                      key={sectionIndex}
-                      className="rounded-3xl border border-white/10 bg-black/20 p-5"
-                    >
+                      <div
+                        key={sectionIndex}
+                        className="rounded-3xl border border-white/10 bg-black/20 p-5"
+                      >
 
-                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center justify-between gap-4">
 
-                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3">
 
-                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400/10 text-sm font-black text-cyan-300">
-                            {String(sectionIndex + 1).padStart(2, "0")}
-                          </span>
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400/10 text-sm font-black text-cyan-300">
+                              {String(
+                                sectionIndex + 1
+                              ).padStart(2, "0")}
+                            </span>
 
-                          <span className="text-sm font-bold text-white/70">
-                            Section {sectionIndex + 1}
-                          </span>
+                            <span className="text-sm font-bold text-white/70">
+                              Section{" "}
+                              {sectionIndex + 1}
+                            </span>
 
-                        </div>
+                          </div>
 
-                        {form.sections.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              removeSection(sectionIndex)
-                            }
-                            className="text-xs font-bold text-red-400 transition hover:text-red-300"
-                          >
-                            Remove
-                          </button>
-                        )}
-
-                      </div>
-
-                      <input
-                        value={section.heading}
-                        onChange={(e) =>
-                          updateSection(
-                            sectionIndex,
-                            "heading",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Section heading"
-                        className="mt-5 w-full rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3.5 font-bold text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50"
-                      />
-
-                      {/* PARAGRAPHS */}
-
-                      <div className="mt-5">
-
-                        <div className="flex items-center justify-between">
-
-                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/35">
-                            Paragraphs
-                          </p>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              addParagraph(sectionIndex)
-                            }
-                            className="text-xs font-bold text-cyan-400 hover:text-cyan-300"
-                          >
-                            + Paragraph
-                          </button>
-
-                        </div>
-
-                        <div className="mt-3 space-y-3">
-
-                          {section.paragraphs.map(
-                            (paragraph, paragraphIndex) => (
-
-                              <div
-                                key={paragraphIndex}
-                                className="flex gap-3"
-                              >
-
-                                <textarea
-                                  value={paragraph}
-                                  onChange={(e) =>
-                                    updateParagraph(
-                                      sectionIndex,
-                                      paragraphIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  rows={4}
-                                  placeholder="Write the paragraph..."
-                                  className="w-full resize-y rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3.5 leading-7 text-white/75 outline-none transition placeholder:text-white/20 focus:border-cyan-400/40"
-                                />
-
-                                {section.paragraphs.length > 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      removeParagraph(
-                                        sectionIndex,
-                                        paragraphIndex
-                                      )
-                                    }
-                                    className="mt-2 text-xs font-bold text-red-400"
-                                  >
-                                    ×
-                                  </button>
-                                )}
-
-                              </div>
-
-                            )
+                          {form.sections.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeSection(
+                                  sectionIndex
+                                )
+                              }
+                              className="text-xs font-bold text-red-400 transition hover:text-red-300"
+                            >
+                              Remove
+                            </button>
                           )}
 
                         </div>
 
-                      </div>
+                        <input
+                          value={section.heading}
+                          onChange={(e) =>
+                            updateSection(
+                              sectionIndex,
+                              "heading",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Section heading"
+                          className="mt-5 w-full rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3.5 font-bold text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50"
+                        />
 
-                      {/* BULLETS */}
+                        {/* PARAGRAPHS */}
 
-                      <div className="mt-6">
+                        <div className="mt-5">
 
-                        <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between">
 
-                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/35">
-                            Bullet points
-                          </p>
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/35">
+                              Paragraphs
+                            </p>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              addBullet(sectionIndex)
-                            }
-                            className="text-xs font-bold text-purple-400 hover:text-purple-300"
-                          >
-                            + Bullet
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                addParagraph(
+                                  sectionIndex
+                                )
+                              }
+                              className="text-xs font-bold text-cyan-400 hover:text-cyan-300"
+                            >
+                              + Paragraph
+                            </button>
 
-                        </div>
+                          </div>
 
-                        {section.bullets.length > 0 && (
                           <div className="mt-3 space-y-3">
 
-                            {section.bullets.map(
-                              (bullet, bulletIndex) => (
+                            {section.paragraphs.map(
+                              (
+                                paragraph,
+                                paragraphIndex
+                              ) => (
 
                                 <div
-                                  key={bulletIndex}
+                                  key={
+                                    paragraphIndex
+                                  }
                                   className="flex gap-3"
                                 >
 
-                                  <input
-                                    value={bullet}
+                                  <textarea
+                                    value={
+                                      paragraph
+                                    }
                                     onChange={(e) =>
-                                      updateBullet(
+                                      updateParagraph(
                                         sectionIndex,
-                                        bulletIndex,
+                                        paragraphIndex,
                                         e.target.value
                                       )
                                     }
-                                    placeholder="Write a bullet point..."
-                                    className="w-full rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3.5 text-white/75 outline-none transition placeholder:text-white/20 focus:border-purple-400/40"
+                                    rows={4}
+                                    placeholder="Write the paragraph..."
+                                    className="w-full resize-y rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3.5 leading-7 text-white/75 outline-none transition placeholder:text-white/20 focus:border-cyan-400/40"
                                   />
 
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      removeBullet(
-                                        sectionIndex,
-                                        bulletIndex
-                                      )
-                                    }
-                                    className="text-xs font-bold text-red-400"
-                                  >
-                                    ×
-                                  </button>
+                                  {section.paragraphs
+                                    .length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        removeParagraph(
+                                          sectionIndex,
+                                          paragraphIndex
+                                        )
+                                      }
+                                      className="mt-2 text-xs font-bold text-red-400"
+                                    >
+                                      ×
+                                    </button>
+                                  )}
 
                                 </div>
 
@@ -862,13 +1047,91 @@ export default function ArticlesManagerPage() {
                             )}
 
                           </div>
-                        )}
+
+                        </div>
+
+                        {/* BULLETS */}
+
+                        <div className="mt-6">
+
+                          <div className="flex items-center justify-between">
+
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/35">
+                              Bullet points
+                            </p>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                addBullet(
+                                  sectionIndex
+                                )
+                              }
+                              className="text-xs font-bold text-purple-400 hover:text-purple-300"
+                            >
+                              + Bullet
+                            </button>
+
+                          </div>
+
+                          {section.bullets.length > 0 && (
+                            <div className="mt-3 space-y-3">
+
+                              {section.bullets.map(
+                                (
+                                  bullet,
+                                  bulletIndex
+                                ) => (
+
+                                  <div
+                                    key={
+                                      bulletIndex
+                                    }
+                                    className="flex gap-3"
+                                  >
+
+                                    <input
+                                      value={
+                                        bullet
+                                      }
+                                      onChange={(e) =>
+                                        updateBullet(
+                                          sectionIndex,
+                                          bulletIndex,
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="Write a bullet point..."
+                                      className="w-full rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3.5 text-white/75 outline-none transition placeholder:text-white/20 focus:border-purple-400/40"
+                                    />
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        removeBullet(
+                                          sectionIndex,
+                                          bulletIndex
+                                        )
+                                      }
+                                      className="text-xs font-bold text-red-400"
+                                    >
+                                      ×
+                                    </button>
+
+                                  </div>
+
+                                )
+                              )}
+
+                            </div>
+                          )}
+
+                        </div>
 
                       </div>
 
-                    </div>
-
-                  ))}
+                    )
+                  )}
 
                 </div>
 
@@ -882,9 +1145,17 @@ export default function ArticlesManagerPage() {
                   type="button"
                   disabled={saving}
                   onClick={saveArticle}
-                  className="flex-1 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-4 font-black shadow-lg shadow-cyan-500/10 transition hover:-translate-y-0.5 hover:shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`flex-1 rounded-2xl px-6 py-4 font-black shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
+                    editingId !== null
+                      ? "bg-gradient-to-r from-amber-500 to-orange-600 shadow-orange-500/10 hover:shadow-orange-500/20"
+                      : "bg-gradient-to-r from-cyan-500 to-blue-600 shadow-cyan-500/10 hover:shadow-cyan-500/20"
+                  }`}
                 >
-                  {saving ? "Saving..." : "Save Article as Draft"}
+                  {saving
+                    ? "Saving..."
+                    : editingId !== null
+                    ? "Save Changes"
+                    : "Save Article as Draft"}
                 </button>
 
                 <button
@@ -893,7 +1164,9 @@ export default function ArticlesManagerPage() {
                   onClick={resetForm}
                   className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 font-bold text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
                 >
-                  Reset
+                  {editingId !== null
+                    ? "Cancel"
+                    : "Reset"}
                 </button>
 
               </div>
@@ -931,19 +1204,23 @@ export default function ArticlesManagerPage() {
                     </div>
 
                     <div>
+
                       <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400">
-                        {form.category || "Category"}
+                        {form.category ||
+                          "Category"}
                       </p>
 
                       <p className="mt-1 text-xs text-white/30">
                         MindraInfo Article
                       </p>
+
                     </div>
 
                   </div>
 
                   <h4 className="mt-6 text-2xl font-black leading-tight">
-                    {form.title || "Your article title will appear here"}
+                    {form.title ||
+                      "Your article title will appear here"}
                   </h4>
 
                   <p className="mt-4 text-sm leading-7 text-white/50">
@@ -953,8 +1230,9 @@ export default function ArticlesManagerPage() {
 
                   <div className="mt-6 border-t border-white/10 pt-6">
 
-                    {form.sections.slice(0, 2).map(
-                      (section, index) => (
+                    {form.sections
+                      .slice(0, 2)
+                      .map((section, index) => (
 
                         <div
                           key={index}
@@ -963,41 +1241,55 @@ export default function ArticlesManagerPage() {
 
                           <h5 className="text-lg font-black">
                             {section.heading ||
-                              `Section ${index + 1}`}
+                              `Section ${
+                                index + 1
+                              }`}
                           </h5>
 
                           {section.paragraphs[0] && (
                             <p className="mt-3 text-sm leading-6 text-white/50">
-                              {section.paragraphs[0]}
+                              {
+                                section
+                                  .paragraphs[0]
+                              }
                             </p>
                           )}
 
-                          {section.bullets.length > 0 && (
+                          {section.bullets.length >
+                            0 && (
                             <div className="mt-3 space-y-2">
 
                               {section.bullets
                                 .slice(0, 3)
-                                .map((bullet, bulletIndex) => (
+                                .map(
+                                  (
+                                    bullet,
+                                    bulletIndex
+                                  ) => (
 
-                                  <div
-                                    key={bulletIndex}
-                                    className="text-xs text-white/50"
-                                  >
-                                    <span className="mr-2 text-cyan-400">
-                                      ✦
-                                    </span>
-                                    {bullet}
-                                  </div>
+                                    <div
+                                      key={
+                                        bulletIndex
+                                      }
+                                      className="text-xs text-white/50"
+                                    >
+                                      <span className="mr-2 text-cyan-400">
+                                        ✦
+                                      </span>
 
-                                ))}
+                                      {bullet}
+
+                                    </div>
+
+                                  )
+                                )}
 
                             </div>
                           )}
 
                         </div>
 
-                      )
-                    )}
+                      ))}
 
                   </div>
 
@@ -1012,6 +1304,7 @@ export default function ArticlesManagerPage() {
             <div className="mt-5 grid grid-cols-2 gap-4">
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+
                 <p className="text-xs font-bold uppercase tracking-[0.15em] text-white/30">
                   Articles
                 </p>
@@ -1019,16 +1312,24 @@ export default function ArticlesManagerPage() {
                 <p className="mt-2 text-3xl font-black">
                   {articles.length}
                 </p>
+
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+
                 <p className="text-xs font-bold uppercase tracking-[0.15em] text-white/30">
                   Published
                 </p>
 
                 <p className="mt-2 text-3xl font-black text-emerald-400">
-                  {articles.filter((article) => article.published).length}
+                  {
+                    articles.filter(
+                      (article) =>
+                        article.published
+                    ).length
+                  }
                 </p>
+
               </div>
 
             </div>
@@ -1044,6 +1345,7 @@ export default function ArticlesManagerPage() {
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
 
             <div>
+
               <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-400">
                 Content Library
               </p>
@@ -1053,9 +1355,10 @@ export default function ArticlesManagerPage() {
               </h2>
 
               <p className="mt-2 text-sm text-white/40">
-                Existing articles are preserved. You can publish or return
-                articles to draft without deleting them.
+                Manage, edit, publish, unpublish or delete
+                your MindraInfo articles.
               </p>
+
             </div>
 
           </div>
@@ -1111,41 +1414,87 @@ export default function ArticlesManagerPage() {
                       "No description available."}
                   </p>
 
-                  <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-5">
+                  {/* ACTIONS */}
 
-                    <Link
-                      href={`/articles/${article.slug}`}
-                      target="_blank"
-                      className="text-sm font-bold text-cyan-400 transition hover:text-cyan-300"
-                    >
-                      View article →
-                    </Link>
+                  <div className="mt-5 border-t border-white/10 pt-5">
 
-                    {article.published ? (
+                    {/* TOP ACTIONS */}
+
+                    <div className="grid grid-cols-2 gap-2">
+
+                      <Link
+                        href={`/articles/${article.slug}`}
+                        target="_blank"
+                        className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs font-bold text-cyan-400 transition hover:bg-cyan-400/10 hover:text-cyan-300"
+                      >
+                        👁️ View
+                      </Link>
 
                       <button
                         type="button"
                         onClick={() =>
-                          unpublishArticle(article.id)
+                          editArticle(article)
                         }
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white/60 transition hover:bg-white/10 hover:text-white"
+                        className="rounded-xl border border-blue-400/20 bg-blue-400/10 px-3 py-2.5 text-xs font-bold text-blue-300 transition hover:bg-blue-400/20"
                       >
-                        Make Draft
+                        ✏️ Edit
                       </button>
 
-                    ) : (
+                    </div>
+
+                    {/* STATUS + DELETE */}
+
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+
+                      {article.published ? (
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            unpublishArticle(
+                              article.id
+                            )
+                          }
+                          className="rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2.5 text-xs font-bold text-amber-300 transition hover:bg-amber-400/20"
+                        >
+                          📝 Make Draft
+                        </button>
+
+                      ) : (
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            publishArticle(
+                              article.id
+                            )
+                          }
+                          className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2.5 text-xs font-bold text-emerald-300 transition hover:bg-emerald-400/20"
+                        >
+                          📢 Publish
+                        </button>
+
+                      )}
 
                       <button
                         type="button"
-                        onClick={() =>
-                          publishArticle(article.id)
+                        disabled={
+                          deletingId === article.id
                         }
-                        className="rounded-xl bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-300 transition hover:bg-emerald-500/20"
+                        onClick={() =>
+                          deleteArticle(
+                            article.id
+                          )
+                        }
+                        className="rounded-xl border border-red-400/20 bg-red-400/10 px-3 py-2.5 text-xs font-bold text-red-300 transition hover:bg-red-400/20 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        Publish
+                        {deletingId ===
+                        article.id
+                          ? "Deleting..."
+                          : "🗑️ Delete"}
                       </button>
 
-                    )}
+                    </div>
 
                   </div>
 

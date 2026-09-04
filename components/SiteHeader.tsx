@@ -1,10 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef,useState } from "react";
 
 export default function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+  const handleScroll = () => {
+    setMenuOpen(false);
+  };
+
+  const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+    if (
+      menuRef.current &&
+      !menuRef.current.contains(event.target as Node)
+    ) {
+      setMenuOpen(false);
+    }
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  document.addEventListener("mousedown", handleOutsideClick);
+  document.addEventListener("touchstart", handleOutsideClick);
+
+  return () => {
+    window.removeEventListener("scroll", handleScroll);
+    document.removeEventListener("mousedown", handleOutsideClick);
+    document.removeEventListener("touchstart", handleOutsideClick);
+  };
+}, []);
 
   const categories = [
     { name: "Career", href: "/career" },
@@ -153,7 +178,7 @@ export default function SiteHeader() {
             </Link>
 
             {/* MENU */}
-            <div className="relative">
+            <div ref={menuRef} className="relative">
               <button
                 type="button"
                 aria-label="Menu"
