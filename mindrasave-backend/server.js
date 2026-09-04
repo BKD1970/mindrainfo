@@ -72,12 +72,18 @@ async function downloadFromCobalt(url, format, timestamp) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      url,
-      videoQuality: "720",
-      youtubeVideoCodec: "h264",
-      audioFormat: "mp3",
-      audioBitrate: "192",
-    }),
+  url,
+  videoQuality: "720",
+  youtubeVideoCodec: "h264",
+  youtubeVideoContainer: "mp4",
+  downloadMode: format === "mp3" ? "audio" : "auto",
+  ...(format === "mp3"
+    ? {
+        audioFormat: "mp3",
+        audioBitrate: "128",
+      }
+    : {}),
+}),
   });
 
   const cobaltData = await cobaltResponse.json();
