@@ -60,13 +60,6 @@ app.post("/download", (req, res) => {
 
   const timestamp = Date.now();
 
-  /*
-    Use a unique temporary filename while downloading.
-    The final filename will be changed to:
-    MS-[Video Title].mp4
-    or
-    MS-[Video Title].mp3
-  */
   const outputTemplate = path.join(
     downloadsDir,
     `mindrasave-${timestamp}.%(ext)s`
@@ -77,18 +70,23 @@ app.post("/download", (req, res) => {
   let args = [
     "--no-playlist",
     "--restrict-filenames",
+    "--no-warnings",
+    "--newline",
     "-o",
     outputTemplate,
   ];
 
   /*
-    YouTube currently needs the web_embedded client
-    for some videos that otherwise return HTTP 403.
+    YouTube
+
+    Do NOT force web_embedded.
+    Let the current yt-dlp YouTube extractor choose
+    its available client strategy.
   */
   if (isYouTube) {
     args.push(
       "--extractor-args",
-      "youtube:player_client=web_embedded"
+      "youtube:player_client=default"
     );
   }
 
@@ -107,11 +105,13 @@ app.post("/download", (req, res) => {
 
   /*
     MP4
+
+    Prefer MP4-compatible video/audio formats.
   */
   if (format === "mp4") {
     args.push(
       "-f",
-      "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[ext=mp4]",
+      "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
       "--merge-output-format",
       "mp4"
     );
@@ -159,6 +159,7 @@ app.post("/download", (req, res) => {
 
     if (code !== 0) {
       console.error("yt-dlp exited with code:", code);
+      console.error("yt-dlp error:", errorOutput.slice(-4000));
 
       if (!res.headersSent) {
         return res.status(500).json({
@@ -171,7 +172,7 @@ app.post("/download", (req, res) => {
     }
 
     /*
-      Find the exact temporary file created by this request.
+      Find downloaded file.
     */
     const files = fs
       .readdirSync(downloadsDir)
@@ -180,41 +181,42 @@ app.post("/download", (req, res) => {
       );
 
     if (files.length === 0) {
-      console.error("Download completed but output file was not found.");
+      console.error(
+        "Download completed but output file was not found."
+      );
 
       return res.status(500).json({
-        error: "Download completed but the output file was not found.",
+        error:
+          "Download completed but the output file was not found.",
       });
     }
 
     const temporaryFilename = files[0];
+
     const temporaryPath = path.join(
       downloadsDir,
       temporaryFilename
     );
 
     /*
-      Extract the original title from the temporary filename.
-
-      Because --restrict-filenames is enabled, yt-dlp has already
-      converted the title into a Windows-safe filename.
+      Extract title from temporary filename.
     */
     const temporaryBaseName = path.basename(
       temporaryFilename,
       path.extname(temporaryFilename)
     );
 
-    const title = temporaryBaseName.replace(
-      `mindrasave-${timestamp}-`,
-      ""
-    ).replace(
-      `mindrasave-${timestamp}`,
-      ""
-    );
+    let title = temporaryBaseName
+      .replace(`mindrasave-${timestamp}-`, "")
+      .replace(`mindrasave-${timestamp}`, "");
 
     /*
-      Create the final MindraSave filename.
+      Fallback title.
     */
+    if (!title.trim()) {
+      title = "download";
+    }
+
     const finalFilename = `MS-${title}.${format}`;
 
     const finalPath = path.join(
@@ -223,34 +225,65 @@ app.post("/download", (req, res) => {
     );
 
     /*
-      Rename the downloaded file.
+      Rename downloaded file.
     */
-    fs.renameSync(temporaryPath, finalPath);
+    try {
+      fs.renameSync(
+        temporaryPath,
+        finalPath
+      );
+    } catch (error) {
+      console.error(
+        "Failed to rename downloaded file:",
+        error
+      );
+
+      return res.status(500).json({
+        error: "The downloaded file could not be prepared.",
+      });
+    }
 
     console.log(`Download ready: ${finalFilename}`);
 
     /*
-      Send the final file to the browser.
+      Send file.
     */
-    res.download(finalPath, finalFilename, (error) => {
-      if (error) {
-        console.error("File download error:", error);
-      }
-
-      /*
-        Clean up after sending.
-      */
-      fs.unlink(finalPath, (cleanupError) => {
-        if (cleanupError) {
-          console.error("Cleanup error:", cleanupError);
-        } else {
-          console.log(`Cleaned up: ${finalFilename}`);
+    res.download(
+      finalPath,
+      finalFilename,
+      (error) => {
+        if (error) {
+          console.error(
+            "File download error:",
+            error
+          );
         }
-      });
-    });
+
+        /*
+          Cleanup.
+        */
+        fs.unlink(
+          finalPath,
+          (cleanupError) => {
+            if (cleanupError) {
+              console.error(
+                "Cleanup error:",
+                cleanupError
+              );
+            } else {
+              console.log(
+                `Cleaned up: ${finalFilename}`
+              );
+            }
+          }
+        );
+      }
+    );
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`MindraSave backend running at http://localhost:${PORT}`);
+  console.log(
+    `MindraSave backend running on port ${PORT}`
+  );
 });
