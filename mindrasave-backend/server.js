@@ -72,6 +72,10 @@ app.post("/download", (req, res) => {
     "--restrict-filenames",
     "--no-warnings",
     "--newline",
+    "--remote-components",
+    "ejs:github",
+    "--js-runtimes",
+    "deno",
     "-o",
     outputTemplate,
   ];
@@ -79,14 +83,20 @@ app.post("/download", (req, res) => {
   /*
     YouTube
 
-    Do NOT force web_embedded.
-    Let the current yt-dlp YouTube extractor choose
-    its available client strategy.
+    Use BgUtils PO-token provider in script mode.
+
+    mweb is the client recommended by the BgUtils
+    installation configuration.
   */
   if (isYouTube) {
     args.push(
       "--extractor-args",
-      "youtube:player_client=default"
+      "youtubepot-bgutilscript:script_path=/app/bgutil-ytdlp-pot-provider/server/build/generate_once.js"
+    );
+
+    args.push(
+      "--extractor-args",
+      "youtube:player_client=mweb"
     );
   }
 
@@ -105,8 +115,6 @@ app.post("/download", (req, res) => {
 
   /*
     MP4
-
-    Prefer MP4-compatible video/audio formats.
   */
   if (format === "mp4") {
     args.push(
@@ -172,7 +180,7 @@ app.post("/download", (req, res) => {
     }
 
     /*
-      Find downloaded file.
+      Find the downloaded file.
     */
     const files = fs
       .readdirSync(downloadsDir)
@@ -199,7 +207,7 @@ app.post("/download", (req, res) => {
     );
 
     /*
-      Extract title from temporary filename.
+      Extract title.
     */
     const temporaryBaseName = path.basename(
       temporaryFilename,
@@ -210,9 +218,6 @@ app.post("/download", (req, res) => {
       .replace(`mindrasave-${timestamp}-`, "")
       .replace(`mindrasave-${timestamp}`, "");
 
-    /*
-      Fallback title.
-    */
     if (!title.trim()) {
       title = "download";
     }
@@ -224,9 +229,6 @@ app.post("/download", (req, res) => {
       finalFilename
     );
 
-    /*
-      Rename downloaded file.
-    */
     try {
       fs.renameSync(
         temporaryPath,
@@ -239,15 +241,13 @@ app.post("/download", (req, res) => {
       );
 
       return res.status(500).json({
-        error: "The downloaded file could not be prepared.",
+        error:
+          "The downloaded file could not be prepared.",
       });
     }
 
     console.log(`Download ready: ${finalFilename}`);
 
-    /*
-      Send file.
-    */
     res.download(
       finalPath,
       finalFilename,
@@ -259,9 +259,6 @@ app.post("/download", (req, res) => {
           );
         }
 
-        /*
-          Cleanup.
-        */
         fs.unlink(
           finalPath,
           (cleanupError) => {
