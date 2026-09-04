@@ -44,7 +44,8 @@ const tools = [
     category: "Text",
     description:
       "Clean, format and transform text quickly for everyday work.",
-    status: "Coming Soon",
+    status: "Available",
+  target: "/tools/text-formatter",
   },
   {
     id: 4,
@@ -53,7 +54,8 @@ const tools = [
     category: "Developer",
     description:
       "Format and organize JSON data so it is easier to read and debug.",
-    status: "Coming Soon",
+    status: "Available",
+    target: "/tools/json-formatter",
   },
   {
     id: 5,
@@ -62,7 +64,8 @@ const tools = [
     category: "Data",
     description:
       "View and inspect CSV datasets in a clean, readable interface.",
-    status: "Coming Soon",
+    status: "Available",
+    target: "/tools/csv-viewer",
   },
   {
     id: 6,
@@ -111,7 +114,8 @@ const tools = [
     category: "AI",
     description:
       "Create clearer and more effective prompts for different AI tasks.",
-    status: "Coming Soon",
+  status: "Available",
+  target: "/tools/ai-prompt-helper",
   },
   {
     id: 11,
@@ -120,7 +124,8 @@ const tools = [
     category: "Text",
     description:
       "Count words, characters, sentences and paragraphs in your text.",
-    status: "Coming Soon",
+  status: "Available",
+  target: "/tools/word-counter",
   },
   {
     id: 12,

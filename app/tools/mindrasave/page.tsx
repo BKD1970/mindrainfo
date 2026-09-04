@@ -30,7 +30,7 @@ export default function MindraSavePage() {
     setIsDownloading(true);
 
     try {
-      const response = await fetch("http://localhost:4000/download", {
+      const response = await fetch("/api/mindrasave", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,7 +99,7 @@ setTimeout(() => {
 
       if (err instanceof TypeError) {
         setError(
-          "MindraSave backend is not running. Start the backend and try again."
+          "Unable to connect to MindraSave right now. Please try again in a moment."
         );
       } else if (err instanceof Error) {
         setError(err.message);
