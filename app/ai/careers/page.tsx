@@ -1,4 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "AI Careers | Jobs & Careers in Artificial Intelligence",
+  description: "Explore AI careers, job opportunities, skills, and how artificial intelligence is changing the future of work.",
+  alternates: {
+  canonical: "/ai/careers",
+},
+};
 
 const careerAreas = [
   {

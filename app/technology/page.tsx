@@ -1,5 +1,15 @@
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Technology | Technology Trends & Resources",
+  description:
+    "Explore technology topics, useful resources, emerging technologies, and practical information about the digital world.",
+    alternates: {
+  canonical: "/technology",
+},
+};
 
 const technologyTopics = [
   {

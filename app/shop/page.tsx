@@ -1,6 +1,16 @@
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { supabase } from "@/lib/supabase";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Shop | Products & Useful Items",
+  description:
+    "Explore products and useful items available through the MindraInfo online shop.",
+    alternates: {
+  canonical: "/shop",
+},
+};
 
 type Product = {
   id: number;

@@ -1,4 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "AI | Learn Artificial Intelligence & AI Tools",
+  description:
+    "Learn artificial intelligence, discover useful AI tools, understand generative AI, prompt engineering, automation, machine learning, and AI careers.",
+    alternates: {
+  canonical: "/ai",
+},
+};
 
 const aiTopics = [
   {

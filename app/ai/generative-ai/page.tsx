@@ -1,4 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Generative AI | Learn How AI Creates Content",
+  description: "Learn how generative AI creates text, images, audio, video, and other types of content.",
+  alternates: {
+  canonical: "/ai/generative-ai",
+},
+};
 
 const generationTypes = [
   {

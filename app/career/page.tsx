@@ -1,5 +1,15 @@
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Career | Career Guidance, Skills & Opportunities",
+  description:
+    "Explore career guidance, skills, opportunities, and practical resources to help you make better career decisions and build your future.",
+    alternates: {
+  canonical: "/career",
+},
+};
 
 const careerPaths = [
   {

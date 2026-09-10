@@ -1,4 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Data Analytics | Excel, SQL, Power BI & Python",
+  description:
+    "Learn data analytics with practical resources covering Excel, SQL, Power BI, Python, data skills, and career opportunities.",
+    alternates: {
+  canonical: "/data-analytics",
+},
+};
 
 const learningPaths = [
   {

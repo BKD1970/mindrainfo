@@ -1,4 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Machine Learning | Learn the Fundamentals",
+  description: "Learn the fundamentals of machine learning and understand how computers learn patterns from data.",
+  alternates: {
+  canonical: "/ai/machine-learning",
+},
+};
 
 const mlAreas = [
   {

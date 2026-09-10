@@ -1,4 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "AI Automation | Automate Tasks with AI",
+  description: "Learn how AI automation can reduce repetitive work, improve productivity, and build smarter workflows.",
+  alternates: {
+  canonical: "/ai/automation",
+},
+};
 
 const automationAreas = [
   {
