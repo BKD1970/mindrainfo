@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
 type ArticleSection = {
 heading: string;
 paragraphs?: string[];
@@ -197,55 +198,57 @@ return ( <main className="min-h-screen bg-[#050816] text-white">
 
     <div className="mt-12 space-y-14">
 
-      {sections.map((section) => (
+  {sections.map((section, sectionIndex) => (
 
-        <section key={section.heading}>
+    <section
+      key={`section-${sectionIndex}`}
+    >
 
-          <h2 className="text-3xl font-black md:text-4xl">
-            {section.heading}
-          </h2>
+      <h2 className="text-3xl font-black md:text-4xl">
+        {section.heading}
+      </h2>
 
-          {section.paragraphs?.map((paragraph) => (
+      {section.paragraphs?.map((paragraph, paragraphIndex) => (
 
-            <p
-              key={paragraph}
-              className="mt-5 text-lg leading-8 text-white/60"
-            >
-              {paragraph}
-            </p>
-
-          ))}
-
-          {section.bullets && section.bullets.length > 0 && (
-
-            <div className="mt-6 space-y-3">
-
-              {section.bullets.map((bullet) => (
-
-                <div
-                  key={bullet}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-white/75 transition hover:border-cyan-400/20 hover:bg-white/[0.06]"
-                >
-
-                  <span className="mr-3 text-cyan-400">
-                    ✦
-                  </span>
-
-                  {bullet}
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
-
-        </section>
+        <p
+          key={`section-${sectionIndex}-paragraph-${paragraphIndex}`}
+          className="mt-5 text-lg leading-8 text-white/60"
+        >
+          {paragraph}
+        </p>
 
       ))}
 
-    </div>
+      {section.bullets && section.bullets.length > 0 && (
+
+        <div className="mt-6 space-y-3">
+
+          {section.bullets.map((bullet, bulletIndex) => (
+
+            <div
+              key={`section-${sectionIndex}-bullet-${bulletIndex}`}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-white/75 transition hover:border-cyan-400/20 hover:bg-white/[0.06]"
+            >
+
+              <span className="mr-3 text-cyan-400">
+                ✦
+              </span>
+
+              {bullet}
+
+            </div>
+
+          ))}
+
+        </div>
+
+      )}
+
+    </section>
+
+  ))}
+
+</div>
 
     {/* CTA */}
 

@@ -3,6 +3,7 @@ import SiteHeader from "@/components/SiteHeader";
 import { supabase } from "@/lib/supabase";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Shop | Products & Useful Items",
   description:

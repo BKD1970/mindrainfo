@@ -4,6 +4,7 @@ import SiteHeader from "@/components/SiteHeader";
 import ProductActions from "@/components/shop/ProductActions";
 import { supabase } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
 type Product = {
   id: number;
   name: string;
