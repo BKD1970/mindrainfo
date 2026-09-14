@@ -1,8 +1,20 @@
 {
   "crons": [
     {
+      "path": "/api/jobs/archive-expired",
+      "schedule": "0 19 * * *"
+    },
+    {
       "path": "/api/jobs/discover",
       "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/jobs/process-discovery",
+      "schedule": "15 20 * * *"
+    },
+    {
+      "path": "/api/jobs/process-ai",
+      "schedule": "30 20 * * *"
     }
   ]
 }
