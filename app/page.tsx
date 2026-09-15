@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ScrollVideo from "@/components/ScrollVideo";
+import PartnerMarquee from "@/components/PartnerMarquee";
 import { supabase } from "@/lib/supabase";
 import SiteHeader from "@/components/SiteHeader";
 import type { Metadata } from "next";
@@ -174,23 +175,69 @@ return ( <main className="relative min-h-screen overflow-x-hidden bg-[#050816] t
         and products to help you learn, build and grow.
       </p>
 
-      <div className="mt-10 flex flex-wrap justify-center gap-4">
+      <div className="mx-auto mt-9 w-full max-w-2xl">
 
-        <Link
-          href="/articles"
-          className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-7 py-3.5 font-semibold shadow-lg shadow-cyan-500/20 transition hover:-translate-y-1 hover:shadow-cyan-500/30"
-        >
-          Explore Resources
-        </Link>
+  {/* HERO ACTIONS */}
+  <div className="flex flex-wrap justify-center gap-3">
 
-        <Link
-          href="/career"
-          className="rounded-xl border border-white/15 bg-white/5 px-7 py-3.5 font-semibold text-white/90 backdrop-blur-md transition hover:-translate-y-1 hover:bg-white/10"
-        >
-          Career Guides
-        </Link>
+    <Link
+      href="/articles"
+      className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 hover:shadow-cyan-500/30"
+    >
+      Explore Resources
+    </Link>
+
+    <Link
+      href="/career"
+      className="rounded-lg border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white/90 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/10"
+    >
+      Career Guides
+    </Link>
+
+  </div>
+
+  {/* BUSINESS CONSULTING CARD */}
+  <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.055] p-5 text-left shadow-xl backdrop-blur-xl">
+
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+      <div className="min-w-0">
+
+        <div className="flex items-center gap-2">
+
+          <span className="text-xl">
+            💼
+          </span>
+
+          <h2 className="text-base font-bold text-white sm:text-lg">
+            Start Building Your Business
+          </h2>
+
+        </div>
+
+        <p className="mt-2 max-w-xl text-sm leading-6 text-white/50">
+          Have a business idea but don't know where to start?
+          Tell us about your idea. MindraInfo can help you plan,
+          structure and build your business step by step.
+        </p>
 
       </div>
+
+      <Link
+        href="/business-consulting"
+        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:-translate-y-0.5 hover:shadow-orange-500/30"
+      >
+        Get a Quote →
+      </Link>
+
+    </div>
+
+  </div>
+
+  {/* PARTNER LOGO BANNER */}
+  <PartnerMarquee />
+
+</div>
 
     </div>
 

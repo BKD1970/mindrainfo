@@ -197,7 +197,7 @@ function AdminLoginContent() {
         AdminRole,
         string
       > = {
-        owner: "/admin",
+        owner: "/admin/Owner",
         jobs: "/admin/jobsmanager",
         articles: "/admin/articlesmanager",
         shop: "/admin/shopmanager",
