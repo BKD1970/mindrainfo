@@ -1,185 +1,347 @@
 import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
 
+const BASE_URL = "https://mindrainfo.in";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://mindrainfo.in";
+  /*
+   * ============================================================
+   * DYNAMIC CONTENT
+   * ============================================================
+   *
+   * Only public/published records are included.
+   */
 
-  // Get all published articles
-  const { data: articles } = await supabase
-    .from("articles")
-    .select("slug")
-    .eq("published", true);
+  const [
+    { data: articles },
+    { data: jobs },
+    { data: products },
+  ] = await Promise.all([
+    supabase
+      .from("articles")
+      .select("slug")
+      .eq("published", true),
 
-  // Get all published jobs
-  const { data: jobs } = await supabase
-    .from("jobs")
-    .select("id")
-    .eq("published", true);
+    supabase
+      .from("jobs")
+      .select("id")
+      .eq("published", true),
+
+    supabase
+      .from("products")
+      .select("slug")
+      .eq("published", true),
+  ]);
+
+  /*
+   * ============================================================
+   * STATIC PUBLIC PAGES
+   * ============================================================
+   */
 
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: baseUrl,
+      url: BASE_URL,
+      changeFrequency: "weekly",
       priority: 1,
     },
+
     {
-      url: `${baseUrl}/ai`,
+      url: `${BASE_URL}/career`,
+      changeFrequency: "weekly",
       priority: 0.9,
     },
+
     {
-      url: `${baseUrl}/career`,
+      url: `${BASE_URL}/data-analytics`,
+      changeFrequency: "weekly",
       priority: 0.9,
     },
+
     {
-      url: `${baseUrl}/data-analytics`,
+      url: `${BASE_URL}/ai`,
+      changeFrequency: "weekly",
       priority: 0.9,
     },
+
     {
-      url: `${baseUrl}/jobs`,
+      url: `${BASE_URL}/technology`,
+      changeFrequency: "weekly",
       priority: 0.9,
     },
+
     {
-      url: `${baseUrl}/technology`,
+      url: `${BASE_URL}/jobs`,
+      changeFrequency: "daily",
       priority: 0.9,
     },
+
     {
-      url: `${baseUrl}/tools`,
-      priority: 1,
+      url: `${BASE_URL}/tools`,
+      changeFrequency: "weekly",
+      priority: 0.9,
     },
+
     {
-      url: `${baseUrl}/articles`,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/shop`,
+      url: `${BASE_URL}/articles`,
+      changeFrequency: "weekly",
       priority: 0.8,
     },
 
-    // AI
     {
-      url: `${baseUrl}/ai/tools`,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/ai/generative-ai`,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/ai/prompt-engineering`,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/ai/automation`,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/ai/careers`,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/ai/machine-learning`,
+      url: `${BASE_URL}/shop`,
+      changeFrequency: "weekly",
       priority: 0.8,
     },
 
-    // Tools
+    /*
+     * ==========================================================
+     * MINDAGAMES
+     * ==========================================================
+     */
+
     {
-      url: `${baseUrl}/tools/pdf`,
+      url: `${BASE_URL}/games`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
+    /*
+     * ==========================================================
+     * AI
+     * ==========================================================
+     */
+
     {
-      url: `${baseUrl}/tools/pdf/compress`,
+      url: `${BASE_URL}/ai/tools`,
+      changeFrequency: "weekly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/excel-to-pdf`,
+      url: `${BASE_URL}/ai/generative-ai`,
+      changeFrequency: "weekly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/pdf-to-excel`,
+      url: `${BASE_URL}/ai/prompt-engineering`,
+      changeFrequency: "weekly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/word-to-pdf`,
+      url: `${BASE_URL}/ai/automation`,
+      changeFrequency: "weekly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/pdf-to-word`,
+      url: `${BASE_URL}/ai/careers`,
+      changeFrequency: "weekly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/jpg-to-pdf`,
+      url: `${BASE_URL}/ai/machine-learning`,
+      changeFrequency: "weekly",
       priority: 0.8,
     },
+
+    /*
+     * ==========================================================
+     * PDF / DIGITAL TOOLS
+     * ==========================================================
+     */
+
     {
-      url: `${baseUrl}/tools/pdf/pdf-to-jpg`,
+      url: `${BASE_URL}/tools/pdf`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/merge`,
+      url: `${BASE_URL}/tools/pdf/compress`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/organize`,
+      url: `${BASE_URL}/tools/pdf/excel-to-pdf`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/pdf-to-powerpoint`,
+      url: `${BASE_URL}/tools/pdf/pdf-to-excel`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/powerpoint-to-pdf`,
+      url: `${BASE_URL}/tools/pdf/word-to-pdf`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/rotate`,
+      url: `${BASE_URL}/tools/pdf/pdf-to-word`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/pdf/split`,
+      url: `${BASE_URL}/tools/pdf/jpg-to-pdf`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/ai-prompt-helper`,
+      url: `${BASE_URL}/tools/pdf/pdf-to-jpg`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/csv-viewer`,
+      url: `${BASE_URL}/tools/pdf/merge`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/image-compressor`,
+      url: `${BASE_URL}/tools/pdf/organize`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+
+    {
+      url: `${BASE_URL}/tools/pdf/pdf-to-powerpoint`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+
+    {
+      url: `${BASE_URL}/tools/pdf/powerpoint-to-pdf`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+
+    {
+      url: `${BASE_URL}/tools/pdf/rotate`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+
+    {
+      url: `${BASE_URL}/tools/pdf/split`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+
+    {
+      url: `${BASE_URL}/tools/ai-prompt-helper`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+
+    {
+      url: `${BASE_URL}/tools/csv-viewer`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+
+    {
+      url: `${BASE_URL}/tools/image-compressor`,
+      changeFrequency: "monthly",
       priority: 0.9,
     },
+
     {
-      url: `${baseUrl}/tools/json-formattor`,
+      url: `${BASE_URL}/tools/json-formattor`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/mindrasave`,
+      url: `${BASE_URL}/tools/mindrasave`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/text-formatter`,
+      url: `${BASE_URL}/tools/text-formatter`,
+      changeFrequency: "monthly",
       priority: 0.8,
     },
+
     {
-      url: `${baseUrl}/tools/word-counter`,
+      url: `${BASE_URL}/tools/word-counter`,
+      changeFrequency: "monthly",
       priority: 0.8,
+    },
+
+    /*
+     * ==========================================================
+     * PUBLIC POLICY PAGE
+     * ==========================================================
+     */
+
+    {
+      url: `${BASE_URL}/crawling-policy`,
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
   ];
 
-  // Add published article URLs
+  /*
+   * ============================================================
+   * PUBLISHED ARTICLE PAGES
+   * ============================================================
+   */
+
   const articlePages: MetadataRoute.Sitemap =
     articles?.map((article) => ({
-      url: `${baseUrl}/articles/${article.slug}`,
+      url: `${BASE_URL}/articles/${article.slug}`,
+      changeFrequency: "monthly",
       priority: 0.7,
     })) ?? [];
 
-  // Add published job URLs
+  /*
+   * ============================================================
+   * PUBLISHED JOB PAGES
+   * ============================================================
+   */
+
   const jobPages: MetadataRoute.Sitemap =
     jobs?.map((job) => ({
-      url: `${baseUrl}/jobs/${job.id}`,
+      url: `${BASE_URL}/jobs/${job.id}`,
+      changeFrequency: "daily",
       priority: 0.7,
     })) ?? [];
 
-  return [...staticPages, ...articlePages, ...jobPages];
+  /*
+   * ============================================================
+   * PUBLISHED SHOP PRODUCT PAGES
+   * ============================================================
+   */
+
+  const productPages: MetadataRoute.Sitemap =
+    products?.map((product) => ({
+      url: `${BASE_URL}/shop/${product.slug}`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    })) ?? [];
+
+  /*
+   * ============================================================
+   * FINAL SITEMAP
+   * ============================================================
+   */
+
+  return [
+    ...staticPages,
+    ...articlePages,
+    ...jobPages,
+    ...productPages,
+  ];
 }
