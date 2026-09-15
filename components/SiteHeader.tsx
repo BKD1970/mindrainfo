@@ -39,6 +39,7 @@ export default function SiteHeader() {
     { name: "Jobs", href: "/jobs" },
     { name: "Shop", href: "/shop" },
     { name: "Tools", href: "/tools" },
+    { name: "Games", href: "/games" },
   ];
 
   return (

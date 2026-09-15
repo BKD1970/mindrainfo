@@ -3,6 +3,11 @@ import ScrollVideo from "@/components/ScrollVideo";
 import { supabase } from "@/lib/supabase";
 import SiteHeader from "@/components/SiteHeader";
 import type { Metadata } from "next";
+import {
+  FaInstagram,
+  FaFacebookF,
+  FaYoutube,
+} from "react-icons/fa";
 
 export const metadata: Metadata = {
 title: "AI, Technology, Careers, Tools & Jobs",
@@ -411,53 +416,81 @@ return ( <main className="relative min-h-screen overflow-x-hidden bg-[#050816] t
 
   </section>
 
-  {/* =====================================================
-      FOOTER
-  ====================================================== */}
+{/* =====================================================
+    FOOTER
+====================================================== */}
 
-  <footer className="border-t border-white/10">
+<footer className="border-t border-white/10">
 
-    <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-white/40 md:flex-row">
+  <div className="mx-auto w-full max-w-7xl px-6">
+
+    {/* Social + Policy Row */}
+    <div className="flex flex-col items-center justify-between gap-6 border-b border-white/10 py-7 md:flex-row">
+
+      {/* Social Media */}
+      <div className="flex items-center gap-3">
+
+        {/* Instagram */}
+        <a
+          href="https://www.instagram.com/mindrainfo.in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="MindraInfo on Instagram"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-pink-500 transition-all duration-300 hover:-translate-y-1 hover:scale-110 hover:border-pink-500/40 hover:bg-pink-500/10 hover:shadow-lg hover:shadow-pink-500/20"
+        >
+          <FaInstagram className="h-5 w-5" />
+        </a>
+
+        {/* Facebook */}
+        <a
+          href="https://www.facebook.com/mindrainfo.in"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="MindraInfo on Facebook"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-blue-500 transition-all duration-300 hover:-translate-y-1 hover:scale-110 hover:border-blue-500/40 hover:bg-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20"
+        >
+          <FaFacebookF className="h-5 w-5" />
+        </a>
+
+        {/* YouTube */}
+        <a
+          href="https://www.youtube.com/channel/UCCzsaBQCDeoeDzIgc_P3rOg"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="MindraInfo on YouTube"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-red-500 transition-all duration-300 hover:-translate-y-1 hover:scale-110 hover:border-red-500/40 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/20"
+        >
+          <FaYoutube className="h-5 w-5" />
+        </a>
+
+      </div>
+
+      {/* Crawling Policy */}
+      <Link
+        href="/crawling-policy"
+        className="text-sm text-white/50 transition-colors duration-300 hover:text-white"
+      >
+        Crawling & Data Use Policy
+      </Link>
+
+    </div>
+
+    {/* Copyright / Made With */}
+    <div className="flex flex-col items-center justify-between gap-3 py-6 text-sm text-white/40 md:flex-row">
 
       <p>
         © 2026 MindraInfo. All rights reserved.
       </p>
 
-      <div className="flex flex-wrap justify-center gap-5">
-
-        <Link
-          href="/career"
-          className="transition hover:text-white"
-        >
-          Career
-        </Link>
-
-        <Link
-          href="/jobs"
-          className="transition hover:text-white"
-        >
-          Jobs
-        </Link>
-
-        <Link
-          href="/tools"
-          className="transition hover:text-white"
-        >
-          Tools
-        </Link>
-
-        <Link
-          href="/shop"
-          className="transition hover:text-white"
-        >
-          Products
-        </Link>
-
-      </div>
+      <p>
+        Made with ❤️ & ☕
+      </p>
 
     </div>
 
-  </footer>
+  </div>
+
+</footer>
 
 </main>
 );

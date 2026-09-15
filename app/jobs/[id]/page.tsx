@@ -4,412 +4,1309 @@ import SiteHeader from "@/components/SiteHeader";
 import { supabase } from "@/lib/supabase";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 type Job = {
-id: number;
-company: string;
-title: string;
-location: string;
-type: string;
-experience: string;
-posted: string;
-category: string;
-skills: string[];
-description: string;
-company_initial: string;
-applyUrl: string | null;
-published: boolean;
+  id: number;
+  created_at: string;
+
+  company: string | null;
+  title: string | null;
+  location: string | null;
+  type: string | null;
+  experience: string | null;
+  posted: string | null;
+  category: string | null;
+  skills: string[] | null;
+  description: string | null;
+  company_initial: string | null;
+
+  applyUrl: string | null;
+  apply_url: string | null;
+
+  published: boolean | null;
+
+  sector: string | null;
+  job_category: string | null;
+  sub_category: string | null;
+
+  government_level: string | null;
+  state: string | null;
+  state_code: string | null;
+
+  organization: string | null;
+  department: string | null;
+  ministry: string | null;
+
+  work_mode: string | null;
+  employment_type: string | null;
+
+  experience_min: number | null;
+  experience_max: number | null;
+
+  education: string | null;
+
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string | null;
+
+  vacancies: number | null;
+
+  age_limit: string | null;
+  age_relaxation: string | null;
+
+  application_start: string | null;
+  application_deadline: string | null;
+  exam_date: string | null;
+
+  notification_type: string | null;
+
+  source_name: string | null;
+  source_url: string | null;
+
+  provider_logo_url: string | null;
+
+  is_government: boolean | null;
+
+  status: string | null;
+};
+
+type JobSource = {
+  id: number;
+  job_id: number;
+  source_name: string;
+  source_url: string;
+  source_type: string | null;
+  is_primary: boolean;
 };
 
 type JobPageProps = {
-params: Promise<{
-id: string;
-}>;
+  params: Promise<{
+    id: string;
+  }>;
 };
+
+function formatDateTime(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatDate(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function getApplyUrl(job: Job) {
+  return job.apply_url ?? job.applyUrl ?? null;
+}
+
+function getExperienceText(job: Job) {
+  if (
+    typeof job.experience_min === "number" ||
+    typeof job.experience_max === "number"
+  ) {
+    const min =
+      typeof job.experience_min === "number"
+        ? job.experience_min
+        : 0;
+
+    const max =
+      typeof job.experience_max === "number"
+        ? job.experience_max
+        : null;
+
+    if (max === null) {
+      return `${min}+ years`;
+    }
+
+    if (min === max) {
+      return `${min} years`;
+    }
+
+    return `${min}–${max} years`;
+  }
+
+  return job.experience || null;
+}
+
+function formatSalary(job: Job) {
+  if (
+    job.salary_min === null &&
+    job.salary_max === null
+  ) {
+    return null;
+  }
+
+  const currency =
+    job.salary_currency || "INR";
+
+  const formatter = new Intl.NumberFormat(
+    "en-IN",
+    {
+      maximumFractionDigits: 0,
+    }
+  );
+
+  if (
+    job.salary_min !== null &&
+    job.salary_max !== null
+  ) {
+    return `${currency} ${formatter.format(
+      job.salary_min
+    )} – ${formatter.format(
+      job.salary_max
+    )}`;
+  }
+
+  if (job.salary_min !== null) {
+    return `${currency} ${formatter.format(
+      job.salary_min
+    )}+`;
+  }
+
+  return `${currency} ${formatter.format(
+    job.salary_max ?? 0
+  )}`;
+}
 
 export async function generateMetadata({
-params,
+  params,
 }: JobPageProps): Promise<Metadata> {
-const { id } = await params;
+  const { id } = await params;
 
-const jobId = Number(id);
+  const jobId = Number(id);
 
-if (!Number.isInteger(jobId)) {
-return {
-title: "Job Not Found",
-description: "The requested job could not be found on MindraInfo.",
-};
-}
+  if (!Number.isInteger(jobId)) {
+    return {
+      title: "Job Not Found",
+      description:
+        "The requested job could not be found on MindraInfo.",
+    };
+  }
 
-const { data: job } = await supabase
-.from("jobs")
-.select("title, company, location, description")
-.eq("id", jobId)
-.eq("published", true)
-.single();
+  const { data: job } = await supabase
+    .from("jobs")
+    .select(
+      "title, company, location, description"
+    )
+    .eq("id", jobId)
+    .eq("published", true)
+    .single();
 
-if (!job) {
-return {
-title: "Job Not Found",
-description: "The requested job could not be found on MindraInfo.",
-};
-}
+  if (!job) {
+    return {
+      title: "Job Not Found",
+      description:
+        "The requested job could not be found on MindraInfo.",
+    };
+  }
 
-return {
-title: `${job.title} at ${job.company}`,
-description: `${job.title} at ${job.company} in ${job.location}. Find job details, requirements, skills, and application information on MindraInfo.`,
-alternates: {
-canonical: `https://mindrainfo.in/jobs/${jobId}`,
-},
-};
+  return {
+    title: `${job.title} at ${job.company}`,
+    description:
+      `${job.title} at ${job.company} in ${job.location}. Find job details, requirements, skills, important dates and application information on MindraInfo.`,
+    alternates: {
+      canonical:
+        `https://mindrainfo.in/jobs/${jobId}`,
+    },
+  };
 }
 
 export default async function JobDetailsPage({
-params,
+  params,
 }: JobPageProps) {
-const { id } = await params;
+  const { id } = await params;
 
-const jobId = Number(id);
+  const jobId = Number(id);
 
-if (!Number.isInteger(jobId)) {
-notFound();
-}
+  if (!Number.isInteger(jobId)) {
+    notFound();
+  }
 
-const { data: job, error } = await supabase
-.from("jobs")
-.select("*")
-.eq("id", jobId)
-.eq("published", true)
-.single<Job>();
+  const {
+    data: job,
+    error,
+  } = await supabase
+    .from("jobs")
+    .select("*")
+    .eq("id", jobId)
+    .eq("published", true)
+    .single<Job>();
 
-if (error || !job) {
-notFound();
-}
+  if (error || !job) {
+    notFound();
+  }
 
-const jobUrl = `https://mindrainfo.in/jobs/${job.id}`;
+  const {
+    data: sourcesData,
+  } = await supabase
+    .from("job_sources")
+    .select("*")
+    .eq("job_id", job.id)
+    .order("is_primary", {
+      ascending: false,
+    })
+    .order("created_at", {
+      ascending: true,
+    });
 
-const structuredData = {
-"@context": "https://schema.org",
-"@type": "JobPosting",
-"@id": `${jobUrl}#jobposting`,
-title: job.title,
-description: job.description,
-url: jobUrl,
-datePosted: job.posted || undefined,
-employmentType: job.type || undefined,
-hiringOrganization: {
-"@type": "Organization",
-name: job.company,
-},
-jobLocation: {
-"@type": "Place",
-address: {
-"@type": "PostalAddress",
-addressLocality: job.location,
-},
-},
-occupationalCategory: job.category || undefined,
-skills: job.skills?.length ? job.skills.join(", ") : undefined,
-};
+  const sources =
+    (sourcesData ?? []) as JobSource[];
 
-return ( <main className="min-h-screen bg-[#f7f7f4] text-gray-900">
+  const applyUrl =
+    getApplyUrl(job);
 
-```
-  {/* JobPosting Schema.org structured data */}
-  <script
-    type="application/ld+json"
-    dangerouslySetInnerHTML={{
-      __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
-    }}
-  />
+  const experienceText =
+    getExperienceText(job);
 
-  {/* HEADER */}
+  const salaryText =
+    formatSalary(job);
 
-  <SiteHeader />
+  const category =
+    job.job_category ??
+    job.category ??
+    null;
 
-  {/* HERO */}
+  const employmentType =
+    job.employment_type ??
+    job.type ??
+    null;
 
-  <section className="relative overflow-hidden border-b border-gray-200 bg-white">
+  const jobUrl =
+    `https://mindrainfo.in/jobs/${job.id}`;
 
-    <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-emerald-300/20 blur-3xl" />
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "@id": `${jobUrl}#jobposting`,
 
-    <div className="pointer-events-none absolute -left-40 top-40 h-[400px] w-[400px] rounded-full bg-teal-300/15 blur-3xl" />
+    title:
+      job.title || undefined,
 
-    <div className="relative mx-auto max-w-6xl px-6 py-16 md:py-24">
+    description:
+      job.description || undefined,
 
-      {/* BACK */}
+    url: jobUrl,
 
-      <Link
-        href="/jobs"
-        className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
-      >
-        ← Back to Jobs
-      </Link>
+    datePosted:
+      job.created_at || undefined,
 
-      {/* JOB HEADER */}
+    validThrough:
+      job.application_deadline ||
+      undefined,
 
-      <div className="mt-10 flex flex-col gap-8 md:flex-row md:items-start">
+    employmentType:
+      employmentType || undefined,
 
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-emerald-50 text-3xl font-black text-emerald-600 shadow-sm">
-          {job.company_initial}
-        </div>
+    hiringOrganization: {
+      "@type": "Organization",
+      name:
+        job.organization ||
+        job.company ||
+        "MindraInfo Job Provider",
 
-        <div className="flex-1">
+      url:
+        job.source_url ||
+        undefined,
+    },
 
-          <div className="flex flex-wrap items-center gap-3">
+    jobLocation: {
+      "@type": "Place",
 
-            <span className="rounded-full bg-emerald-50 px-4 py-1.5 text-xs font-bold text-emerald-700">
-              {job.posted}
-            </span>
+      address: {
+        "@type": "PostalAddress",
 
-            <span className="rounded-full bg-gray-100 px-4 py-1.5 text-xs font-bold text-gray-600">
-              {job.category}
-            </span>
+        addressLocality:
+          job.location ||
+          undefined,
 
-          </div>
+        addressRegion:
+          job.state ||
+          undefined,
 
-          <h1 className="mt-5 text-4xl font-black tracking-tight md:text-6xl">
-            {job.title}
-          </h1>
+        addressCountry:
+          "IN",
+      },
+    },
 
-          <p className="mt-4 text-xl font-bold text-emerald-600">
-            {job.company}
-          </p>
+    occupationalCategory:
+      category || undefined,
 
-          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-gray-600">
+    educationRequirements:
+      job.education || undefined,
 
-            <span>
-              📍 {job.location}
-            </span>
+    experienceRequirements:
+      experienceText || undefined,
 
-            <span>
-              💼 {job.type}
-            </span>
+    baseSalary:
+      salaryText
+        ? {
+            "@type": "MonetaryAmount",
+            currency:
+              job.salary_currency ||
+              "INR",
+            value: {
+              "@type":
+                "QuantitativeValue",
 
-            <span>
-              🎓 {job.experience}
-            </span>
+              minValue:
+                job.salary_min ??
+                undefined,
 
-          </div>
+              maxValue:
+                job.salary_max ??
+                undefined,
 
-        </div>
+              unitText:
+                "YEAR",
+            },
+          }
+        : undefined,
 
-      </div>
+    identifier: {
+      "@type": "PropertyValue",
+      name: "MindraInfo Job ID",
+      value: String(job.id),
+    },
 
-    </div>
+    industry:
+      job.sector ||
+      undefined,
+  };
 
-  </section>
+  return (
+    <main className="min-h-screen bg-[#f7f7f4] text-gray-900">
 
-  {/* MAIN CONTENT */}
+      {/* JOBPOSTING STRUCTURED DATA */}
 
-  <section className="mx-auto max-w-6xl px-6 py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            structuredData
+          ).replace(
+            /</g,
+            "\\u003c"
+          ),
+        }}
+      />
 
-    <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
 
-      {/* DESCRIPTION */}
+      {/* HEADER */}
 
-      <div className="rounded-[2rem] border border-gray-200 bg-white p-7 shadow-sm md:p-10">
+      <SiteHeader />
 
-        <div>
 
-          <p className="text-sm font-bold uppercase tracking-[0.25em] text-emerald-600">
-            Job Description
-          </p>
+      {/* HERO */}
 
-          <h2 className="mt-3 text-3xl font-black">
-            About this opportunity
-          </h2>
+      <section className="relative overflow-hidden border-b border-gray-200 bg-white">
 
-        </div>
+        <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-emerald-300/20 blur-3xl" />
 
-        <div className="mt-8 whitespace-pre-line text-base leading-8 text-gray-600">
-          {job.description}
-        </div>
+        <div className="pointer-events-none absolute -left-40 top-40 h-[400px] w-[400px] rounded-full bg-teal-300/15 blur-3xl" />
 
-        {/* SKILLS */}
+        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 md:py-20">
 
-        {job.skills && job.skills.length > 0 && (
-          <div className="mt-10 border-t border-gray-100 pt-8">
+          {/* BACK */}
 
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-gray-500">
-              Skills & Requirements
-            </p>
+          <Link
+            href="/jobs"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 sm:text-sm"
+          >
+            ← Back to Jobs
+          </Link>
 
-            <div className="mt-5 flex flex-wrap gap-2">
 
-              {job.skills.map((skill) => (
+          {/* HEADER INFORMATION */}
 
-                <span
-                  key={skill}
-                  className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700"
-                >
-                  {skill}
-                </span>
+          <div className="mt-8 flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
 
-              ))}
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-emerald-50 text-3xl font-black text-emerald-600 shadow-sm">
+
+              {job.provider_logo_url ? (
+                <img
+                  src={
+                    job.provider_logo_url
+                  }
+                  alt=""
+                  className="h-full w-full object-contain p-3"
+                />
+              ) : (
+                job.company_initial ||
+                job.company
+                  ?.charAt(0)
+                  .toUpperCase() ||
+                "J"
+              )}
 
             </div>
 
-          </div>
-        )}
 
-      </div>
+            <div className="min-w-0 flex-1">
 
-      {/* APPLICATION CARD */}
+              {/* BADGES */}
 
-      <aside className="h-fit lg:sticky lg:top-24">
+              <div className="flex flex-wrap items-center gap-2">
 
-        <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50 p-7 shadow-sm">
+                {job.posted && (
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                    {job.posted}
+                  </span>
+                )}
 
-          <div className="text-3xl">
-            🚀
-          </div>
+                {category && (
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-bold text-gray-600">
+                    {category}
+                  </span>
+                )}
 
-          <h2 className="mt-4 text-2xl font-black">
-            Ready to apply?
-          </h2>
+                {job.sector && (
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700">
+                    {job.sector}
+                  </span>
+                )}
 
-          <p className="mt-3 text-sm leading-6 text-gray-600">
-            Apply directly through the original employer or recruiter
-            website.
-          </p>
+                {job.is_government && (
+                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-bold text-indigo-700">
+                    Government
+                  </span>
+                )}
 
-          {job.applyUrl ? (
+              </div>
 
-            <a
-              href={job.applyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-7 flex w-full items-center justify-center rounded-xl bg-emerald-600 px-5 py-4 font-bold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md"
-            >
-              View & Apply →
-            </a>
 
-          ) : (
+              <h1 className="mt-4 text-4xl font-black tracking-tight md:text-6xl">
+                {job.title}
+              </h1>
 
-            <div className="mt-7 rounded-xl bg-white px-5 py-4 text-center text-sm font-bold text-gray-500">
-              Application Link Coming Soon
-            </div>
-
-          )}
-
-        </div>
-
-        {/* JOB SUMMARY */}
-
-        <div className="mt-5 rounded-[2rem] border border-gray-200 bg-white p-7 shadow-sm">
-
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-gray-400">
-            Job Summary
-          </p>
-
-          <div className="mt-5 space-y-4 text-sm">
-
-            <div className="flex justify-between gap-4">
-              <span className="text-gray-500">
-                Company
-              </span>
-
-              <span className="text-right font-bold">
+              <p className="mt-3 text-xl font-bold text-emerald-600">
                 {job.company}
-              </span>
-            </div>
+              </p>
 
-            <div className="flex justify-between gap-4">
-              <span className="text-gray-500">
-                Location
-              </span>
 
-              <span className="text-right font-bold">
-                {job.location}
-              </span>
-            </div>
+              {/* QUICK DETAILS */}
 
-            <div className="flex justify-between gap-4">
-              <span className="text-gray-500">
-                Job Type
-              </span>
+              <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-gray-600 sm:text-sm">
 
-              <span className="text-right font-bold">
-                {job.type}
-              </span>
-            </div>
+                {job.location && (
+                  <span>
+                    📍 {job.location}
+                  </span>
+                )}
 
-            <div className="flex justify-between gap-4">
-              <span className="text-gray-500">
-                Experience
-              </span>
+                {employmentType && (
+                  <span>
+                    💼 {employmentType}
+                  </span>
+                )}
 
-              <span className="text-right font-bold">
-                {job.experience}
-              </span>
-            </div>
+                {experienceText && (
+                  <span>
+                    🎓 {experienceText}
+                  </span>
+                )}
 
-            <div className="flex justify-between gap-4">
-              <span className="text-gray-500">
-                Category
-              </span>
+                {job.work_mode && (
+                  <span>
+                    🏠 {job.work_mode}
+                  </span>
+                )}
 
-              <span className="text-right font-bold">
-                {job.category}
-              </span>
+                {job.state_code && (
+                  <span>
+                    🇮🇳 {job.state_code}
+                  </span>
+                )}
+
+              </div>
+
             </div>
 
           </div>
 
         </div>
 
-      </aside>
+      </section>
 
-    </div>
 
-  </section>
+      {/* MAIN CONTENT */}
 
-  {/* ORIGINAL SOURCE */}
+      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14">
 
-  <section className="mx-auto max-w-5xl px-6 pb-20">
+        <div className="grid gap-7 lg:grid-cols-[1fr_330px]">
 
-    <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50 p-8 text-center md:p-12">
 
-      <div className="text-4xl">
-        🔗
-      </div>
+          {/* LEFT CONTENT */}
 
-      <h2 className="mt-5 text-2xl font-black md:text-3xl">
-        Apply through the original source.
-      </h2>
+          <div className="space-y-7">
 
-      <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-600 md:text-base">
-        MindraInfo helps you discover career opportunities. When an
-        application link is available, you will be directed to the
-        original employer or recruiter website.
-      </p>
 
-    </div>
+            {/* DESCRIPTION */}
 
-  </section>
+            <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm md:p-9">
 
-  {/* FOOTER */}
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-600">
+                Job Description
+              </p>
 
-  <footer className="border-t border-gray-200 bg-white">
+              <h2 className="mt-2 text-2xl font-black md:text-3xl">
+                About this opportunity
+              </h2>
 
-    <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-gray-500 md:flex-row">
+              <div className="mt-6 whitespace-pre-line text-sm leading-8 text-gray-600 md:text-base">
+                {job.description ||
+                  "Job description not available."}
+              </div>
 
-      <p>
-        © 2026 MindraInfo. All rights reserved.
-      </p>
 
-      <Link
-        href="/jobs"
-        className="font-semibold text-emerald-600 transition hover:text-emerald-700"
-      >
-        ← Back to Jobs
-      </Link>
+              {/* SKILLS */}
 
-    </div>
+              {job.skills &&
+                job.skills.length >
+                  0 && (
+                  <div className="mt-8 border-t border-gray-100 pt-7">
 
-  </footer>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
+                      Skills & Requirements
+                    </p>
 
-</main>
+                    <div className="mt-4 flex flex-wrap gap-2">
 
-);
+                      {job.skills.map(
+                        (skill, index) => (
+                          <span
+                            key={`${skill}-${index}`}
+                            className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700"
+                          >
+                            {skill}
+                          </span>
+                        )
+                      )}
+
+                    </div>
+
+                  </div>
+                )}
+
+            </div>
+
+
+            {/* GOVERNMENT / RECRUITMENT INFORMATION */}
+
+            {(job.is_government ||
+              job.government_level ||
+              job.organization ||
+              job.department ||
+              job.ministry ||
+              job.vacancies ||
+              job.age_limit ||
+              job.age_relaxation ||
+              job.notification_type) && (
+
+              <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm md:p-9">
+
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-600">
+                  Recruitment Information
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black md:text-3xl">
+                  Important details
+                </h2>
+
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+
+
+                  {job.organization && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        Organization
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.organization}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.department && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        Department
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.department}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.ministry && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        Ministry
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.ministry}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.government_level && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        Government Level
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.government_level}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.state && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        State
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.state}
+                        {job.state_code
+                          ? ` (${job.state_code})`
+                          : ""}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.vacancies !==
+                    null && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        Vacancies
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.vacancies}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.notification_type && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        Notification Type
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.notification_type}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.age_limit && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        Age Limit
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.age_limit}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.age_relaxation && (
+                    <div className="rounded-2xl bg-gray-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                        Age Relaxation
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {job.age_relaxation}
+                      </p>
+
+                    </div>
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
+
+            {/* CAREER DETAILS */}
+
+            <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm md:p-9">
+
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-600">
+                Job Details
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black md:text-3xl">
+                Career information
+              </h2>
+
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+
+
+                {job.location && (
+                  <div className="rounded-2xl bg-gray-50 p-4">
+
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                      Location
+                    </p>
+
+                    <p className="mt-1 text-sm font-bold">
+                      {job.location}
+                    </p>
+
+                  </div>
+                )}
+
+
+                {employmentType && (
+                  <div className="rounded-2xl bg-gray-50 p-4">
+
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                      Employment Type
+                    </p>
+
+                    <p className="mt-1 text-sm font-bold">
+                      {employmentType}
+                    </p>
+
+                  </div>
+                )}
+
+
+                {job.work_mode && (
+                  <div className="rounded-2xl bg-gray-50 p-4">
+
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                      Work Mode
+                    </p>
+
+                    <p className="mt-1 text-sm font-bold">
+                      {job.work_mode}
+                    </p>
+
+                  </div>
+                )}
+
+
+                {experienceText && (
+                  <div className="rounded-2xl bg-gray-50 p-4">
+
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                      Experience
+                    </p>
+
+                    <p className="mt-1 text-sm font-bold">
+                      {experienceText}
+                    </p>
+
+                  </div>
+                )}
+
+
+                {job.education && (
+                  <div className="rounded-2xl bg-gray-50 p-4 sm:col-span-2">
+
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                      Qualification
+                    </p>
+
+                    <p className="mt-1 text-sm font-bold">
+                      {job.education}
+                    </p>
+
+                  </div>
+                )}
+
+
+                {salaryText && (
+                  <div className="rounded-2xl bg-gray-50 p-4">
+
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                      Salary
+                    </p>
+
+                    <p className="mt-1 text-sm font-bold">
+                      {salaryText}
+                    </p>
+
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+
+            {/* IMPORTANT DATES */}
+
+            {(job.application_start ||
+              job.application_deadline ||
+              job.exam_date) && (
+
+              <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm md:p-9">
+
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-600">
+                  Important Dates
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black md:text-3xl">
+                  Application timeline
+                </h2>
+
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+
+
+                  {job.application_start && (
+                    <div className="rounded-2xl bg-emerald-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-600">
+                        Application Starts
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {formatDate(
+                          job.application_start
+                        )}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.application_deadline && (
+                    <div className="rounded-2xl bg-orange-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-orange-600">
+                        Apply By
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {formatDateTime(
+                          job.application_deadline
+                        )}
+                      </p>
+
+                    </div>
+                  )}
+
+
+                  {job.exam_date && (
+                    <div className="rounded-2xl bg-blue-50 p-4">
+
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600">
+                        Exam Date
+                      </p>
+
+                      <p className="mt-1 text-sm font-bold">
+                        {formatDateTime(
+                          job.exam_date
+                        )}
+                      </p>
+
+                    </div>
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
+
+            {/* SOURCES */}
+
+            {sources.length > 0 && (
+              <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm md:p-9">
+
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-600">
+                  Verified Sources
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black md:text-3xl">
+                  Original information sources
+                </h2>
+
+                <div className="mt-6 space-y-2">
+
+                  {sources.map(
+                    (source) => (
+                      <a
+                        key={
+                          source.id
+                        }
+                        href={
+                          source.source_url
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                      >
+
+                        <span className="truncate">
+                          {source.source_name}
+                        </span>
+
+                        <span className="shrink-0">
+                          Open →
+                        </span>
+
+                      </a>
+                    )
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
+          </div>
+
+
+          {/* RIGHT SIDEBAR */}
+
+          <aside className="h-fit lg:sticky lg:top-24">
+
+
+            {/* APPLICATION */}
+
+            <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50 p-6 shadow-sm">
+
+              <div className="text-3xl">
+                🚀
+              </div>
+
+              <h2 className="mt-3 text-2xl font-black">
+                Ready to apply?
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Apply directly through the
+                original employer or official
+                recruitment website.
+              </p>
+
+
+              {applyUrl ? (
+
+                <a
+                  href={applyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 flex w-full items-center justify-center rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md"
+                >
+                  View & Apply →
+                </a>
+
+              ) : (
+
+                <div className="mt-6 rounded-xl bg-white px-5 py-3.5 text-center text-xs font-bold text-gray-500">
+                  Application Link Coming Soon
+                </div>
+
+              )}
+
+            </div>
+
+
+            {/* QUICK SUMMARY */}
+
+            <div className="mt-4 rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm">
+
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
+                Job Summary
+              </p>
+
+              <div className="mt-5 space-y-3 text-xs">
+
+
+                {job.company && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Company
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {job.company}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {job.location && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Location
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {job.location}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {job.state_code && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      State
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {job.state_code}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {job.sector && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Sector
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {job.sector}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {category && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Category
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {category}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {employmentType && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Job Type
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {employmentType}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {experienceText && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Experience
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {experienceText}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {job.work_mode && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Work Mode
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {job.work_mode}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {salaryText && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Salary
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {salaryText}
+                    </span>
+
+                  </div>
+                )}
+
+
+                {job.vacancies !==
+                  null && (
+                  <div className="flex justify-between gap-4">
+
+                    <span className="text-gray-500">
+                      Vacancies
+                    </span>
+
+                    <span className="text-right font-bold">
+                      {job.vacancies}
+                    </span>
+
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+
+            {/* SOURCE BUTTON */}
+
+            {job.source_url && (
+              <a
+                href={
+                  job.source_url
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-xs font-bold text-gray-700 shadow-sm transition hover:bg-gray-100"
+              >
+                🔗 Open Original Source →
+              </a>
+            )}
+
+          </aside>
+
+        </div>
+
+      </section>
+
+
+      {/* ORIGINAL SOURCE */}
+
+      <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6 sm:pb-20">
+
+        <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50 p-8 text-center md:p-12">
+
+          <div className="text-4xl">
+            🔗
+          </div>
+
+          <h2 className="mt-5 text-2xl font-black md:text-3xl">
+            Apply through the original source.
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-600">
+            MindraInfo helps you discover
+            career opportunities. When an
+            application link is available,
+            you will be directed to the
+            original employer or official
+            recruitment website.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      {/* FOOTER */}
+
+      <footer className="border-t border-gray-200 bg-white">
+
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-7 text-xs text-gray-500 sm:px-6 md:flex-row">
+
+          <p>
+            © 2026 MindraInfo. All rights reserved.
+          </p>
+
+          <Link
+            href="/jobs"
+            className="font-semibold text-emerald-600 transition hover:text-emerald-700"
+          >
+            ← Back to Jobs
+          </Link>
+
+        </div>
+
+      </footer>
+
+    </main>
+  );
 }
