@@ -48,7 +48,7 @@ const LANGUAGES: Language[] = [
 
 const I18N: Record<string, Record<string, string>> = {
   en: {
-    badge: "🎮 MindaGames",
+    badge: "🎮 MindraGames",
     title: "Dharma",
     title2: "Quiz",
     subtitle:
@@ -62,7 +62,7 @@ const I18N: Record<string, Record<string, string>> = {
     score: "Your Score",
     nextEpisode: "Go to Next Episode →",
     playAgain: "Play Again",
-    back: "← Back to MindaGames",
+    back: "← Back to MindraGames",
     perfect: "Perfect knowledge run.",
     excellent: "Excellent knowledge.",
     good: "Good attempt. Keep learning.",
@@ -742,7 +742,7 @@ function getStoredPlayedIds(): string[] {
               <div>
 
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-600">
-                  MindaGames
+                  MindraGames
                 </p>
 
                 <h1 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">

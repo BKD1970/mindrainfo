@@ -3,6 +3,7 @@ import ScrollVideo from "@/components/ScrollVideo";
 import PartnerMarquee from "@/components/PartnerMarquee";
 import { supabase } from "@/lib/supabase";
 import SiteHeader from "@/components/SiteHeader";
+import GyanGokulRunner from "@/components/GyanGokulRunner";
 import type { Metadata } from "next";
 import {
   FaInstagram,
@@ -89,6 +90,8 @@ publisher: {
 
 return ( <main className="relative min-h-screen overflow-x-hidden bg-[#050816] text-white">
 
+  <GyanGokulRunner />
+  
   {/* Homepage Schema.org structured data */}
   <script
   type="application/ld+json"
@@ -227,7 +230,7 @@ return ( <main className="relative min-h-screen overflow-x-hidden bg-[#050816] t
         href="/business-consulting"
         className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:-translate-y-0.5 hover:shadow-orange-500/30"
       >
-        Get a Quote →
+        Submit Your Idea →
       </Link>
 
     </div>
