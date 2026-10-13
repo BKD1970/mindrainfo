@@ -435,8 +435,8 @@ app.post("/download", async (req, res) => {
   const cleanUrl = url.trim();
   const timestamp = Date.now();
 
-  /*
-    YouTube → Cobalt
+    /*
+    YouTube → Cobalt first, then yt-dlp fallback
   */
   if (isYouTubeUrl(cleanUrl)) {
     try {
@@ -447,7 +447,7 @@ app.post("/download", async (req, res) => {
       );
 
       console.log(
-        `Sending YouTube file: ${result.filename}`
+        `Sending YouTube file through Cobalt: ${result.filename}`
       );
 
       res.download(
@@ -456,46 +456,45 @@ app.post("/download", async (req, res) => {
         (error) => {
           if (error) {
             console.error(
-              "YouTube file download error:",
+              "YouTube/Cobalt file download error:",
               error
             );
           }
 
           for (const file of result.cleanup) {
-            fs.unlink(
-              file,
-              (cleanupError) => {
-                if (cleanupError) {
-                  console.error(
-                    "YouTube cleanup error:",
-                    cleanupError
-                  );
-                } else {
-                  console.log(
-                    `Cleaned up: ${file}`
-                  );
-                }
+            fs.unlink(file, (cleanupError) => {
+              if (cleanupError) {
+                console.error(
+                  "YouTube/Cobalt cleanup error:",
+                  cleanupError
+                );
+              } else {
+                console.log(`Cleaned up: ${file}`);
               }
-            );
+            });
           }
         }
       );
-    } catch (error) {
+    } catch (cobaltError) {
+      const cobaltMessage =
+        cobaltError instanceof Error
+          ? cobaltError.message
+          : String(cobaltError);
+
       console.error(
-        "YouTube/Cobalt error:",
-        error
+        `Cobalt failed for YouTube. Trying yt-dlp fallback. Reason: ${cobaltMessage}`
       );
 
-      if (!res.headersSent) {
-        res.status(500).json({
-          error:
-            "The YouTube video could not be downloaded.",
-          details:
-            error instanceof Error
-              ? error.message
-              : "Unknown Cobalt error.",
-        });
-      }
+      /*
+        Reuse the existing yt-dlp downloader.
+        This does not change the non-YouTube path.
+      */
+      downloadWithYtDlp(
+        cleanUrl,
+        format,
+        timestamp,
+        res
+      );
     }
 
     return;
