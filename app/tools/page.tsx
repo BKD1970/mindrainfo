@@ -1,9 +1,7 @@
 "use client";
-
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SiteHeader from "@/components/SiteHeader";
-
 const categories = [
   "All Tools",
   "PDF",
@@ -15,7 +13,6 @@ const categories = [
   "AI",
   "Media",
 ];
-
 const tools = [
   {
     id: 1,
@@ -23,9 +20,19 @@ const tools = [
     icon: "📄",
     category: "PDF",
     description:
-      "Merge, split, compress, rotate, organize and convert PDF files quickly.",
+      "Edit, merge, split, compress, rotate, organize and convert PDF files quickly.",
     status: "Available",
     target: "/tools/pdf",
+  },
+    {
+    id: 14,
+    name: "PDF Editor",
+    icon: "✏️",
+    category: "PDF",
+    description:
+      "Edit PDF text, add text and images, and download your edited PDF.",
+    target: "/tools/pdf/pdf-editor",
+    status: "Available",
   },
   {
     id: 2,
@@ -148,49 +155,63 @@ const tools = [
     target: "translator",
   },
 ];
-
 export default function ToolsPage() {
   const [selectedCategory, setSelectedCategory] = useState("All Tools");
 
+  useEffect(() => {
+    const openPanelFromHash = () => {
+      const rawId = window.location.hash.slice(1);
+      if (!rawId) return;
+
+      let id = rawId;
+      try {
+        id = decodeURIComponent(rawId);
+      } catch {
+        // Keep the original fragment if it is not URI-encoded correctly.
+      }
+
+      const section = document.getElementById(id);
+      const details = section?.querySelector<HTMLDetailsElement>("details.tool-accordion");
+      if (!details) return;
+
+      document.querySelectorAll<HTMLDetailsElement>("details.tool-accordion").forEach((panel) => {
+        if (panel !== details) panel.open = false;
+      });
+      details.open = true;
+    };
+
+    openPanelFromHash();
+    window.addEventListener("hashchange", openPanelFromHash);
+    return () => window.removeEventListener("hashchange", openPanelFromHash);
+  }, []);
   /* =========================================================
      EMI STATES
   ========================================================= */
-
   const [loanAmount, setLoanAmount] = useState(500000);
   const [interestRate, setInterestRate] = useState(8.5);
   const [loanTenure, setLoanTenure] = useState(5);
-
   /* =========================================================
      PERCENTAGE STATES
   ========================================================= */
-
   const [percentage, setPercentage] = useState(20);
   const [percentageOf, setPercentageOf] = useState(500);
-
   const [originalValue, setOriginalValue] = useState(500);
   const [newValue, setNewValue] = useState(600);
-
   /* =========================================================
      UNIT CONVERTER STATES
   ========================================================= */
-
   const [unitCategory, setUnitCategory] = useState("Length");
-
   const [fromUnit, setFromUnit] = useState("Meter");
   const [toUnit, setToUnit] = useState("Kilometer");
-
   const [unitValue, setUnitValue] = useState(1);
-
   /* =========================================================
      AGE CALCULATOR STATES
   ========================================================= */
-
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   /* =========================================================
      TRANSLATOR STATES
   ========================================================= */
-
   const languages = [
     { name: "English", code: "en-IN" },
     { name: "Assamese", code: "as-IN" },
@@ -216,35 +237,26 @@ export default function ToolsPage() {
     { name: "Telugu", code: "te-IN" },
     { name: "Urdu", code: "ur-IN" },
   ];
-
   const [sourceLanguage, setSourceLanguage] = useState("od-IN");
   const [targetLanguage, setTargetLanguage] = useState("hi-IN");
-
   const [translationInput, setTranslationInput] = useState("");
   const [translationResult, setTranslationResult] = useState("");
-
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState("");
-
   const swapLanguages = () => {
     setSourceLanguage(targetLanguage);
     setTargetLanguage(sourceLanguage);
-
     setTranslationInput(translationResult);
     setTranslationResult(translationInput);
-
     setTranslationError("");
   };
-
   const handleTranslate = async () => {
     const text = translationInput.trim();
-
     if (!text) {
       setTranslationError("Please enter some text to translate.");
       setTranslationResult("");
       return;
     }
-
     if (text.length > 2000) {
       setTranslationError(
         "Please keep the text within 2000 characters."
@@ -252,17 +264,14 @@ export default function ToolsPage() {
       setTranslationResult("");
       return;
     }
-
     if (sourceLanguage === targetLanguage) {
       setTranslationResult(text);
       setTranslationError("");
       return;
     }
-
     setIsTranslating(true);
     setTranslationError("");
     setTranslationResult("");
-
     try {
       const response = await fetch("/api/translate", {
         method: "POST",
@@ -275,15 +284,12 @@ export default function ToolsPage() {
           targetLanguageCode: targetLanguage,
         }),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(
           data?.error || "Translation failed. Please try again."
         );
       }
-
       setTranslationResult(data.translatedText || "");
     } catch (error) {
       setTranslationError(
@@ -295,10 +301,8 @@ export default function ToolsPage() {
       setIsTranslating(false);
     }
   };
-
   const copyTranslation = async () => {
     if (!translationResult) return;
-
     try {
       await navigator.clipboard.writeText(translationResult);
     } catch {
@@ -308,25 +312,18 @@ export default function ToolsPage() {
   /* =========================================================
      FILTERED TOOLS
   ========================================================= */
-
   const filteredTools =
     selectedCategory === "All Tools"
       ? tools
       : tools.filter((tool) => tool.category === selectedCategory);
-
   /* =========================================================
      EMI CALCULATION
   ========================================================= */
-
   const calculations = useMemo(() => {
     const principal = loanAmount;
-
     const monthlyInterestRate = interestRate / 12 / 100;
-
     const numberOfMonths = loanTenure * 12;
-
     let emi = 0;
-
     if (monthlyInterestRate === 0) {
       emi = principal / numberOfMonths;
     } else {
@@ -336,33 +333,25 @@ export default function ToolsPage() {
           Math.pow(1 + monthlyInterestRate, numberOfMonths)) /
         (Math.pow(1 + monthlyInterestRate, numberOfMonths) - 1);
     }
-
     const totalPayment = emi * numberOfMonths;
-
     const totalInterest = totalPayment - principal;
-
     return {
       emi,
       totalPayment,
       totalInterest,
     };
   }, [loanAmount, interestRate, loanTenure]);
-
   /* =========================================================
      PERCENTAGE CALCULATIONS
   ========================================================= */
-
   const percentageResult = (percentage / 100) * percentageOf;
-
   const percentageChange =
     originalValue !== 0
       ? ((newValue - originalValue) / originalValue) * 100
       : 0;
-
   /* =========================================================
      UNIT CONVERSION
   ========================================================= */
-
   const unitConversions: Record<string, Record<string, number>> = {
     Length: {
       Meter: 1,
@@ -374,7 +363,6 @@ export default function ToolsPage() {
       Foot: 0.3048,
       Inch: 0.0254,
     },
-
     Weight: {
       Kilogram: 1,
       Gram: 0.001,
@@ -384,47 +372,34 @@ export default function ToolsPage() {
       Tonne: 1000,
     },
   };
-
   const convertUnit = () => {
     if (unitCategory === "Temperature") {
       if (fromUnit === toUnit) return unitValue;
-
       if (fromUnit === "Celsius" && toUnit === "Fahrenheit") {
         return (unitValue * 9) / 5 + 32;
       }
-
       if (fromUnit === "Fahrenheit" && toUnit === "Celsius") {
         return ((unitValue - 32) * 5) / 9;
       }
-
       if (fromUnit === "Celsius" && toUnit === "Kelvin") {
         return unitValue + 273.15;
       }
-
       if (fromUnit === "Kelvin" && toUnit === "Celsius") {
         return unitValue - 273.15;
       }
-
       if (fromUnit === "Fahrenheit" && toUnit === "Kelvin") {
         return ((unitValue - 32) * 5) / 9 + 273.15;
       }
-
       if (fromUnit === "Kelvin" && toUnit === "Fahrenheit") {
         return ((unitValue - 273.15) * 9) / 5 + 32;
       }
     }
-
     const category = unitConversions[unitCategory];
-
     if (!category) return unitValue;
-
     const valueInBase = unitValue * category[fromUnit];
-
     return valueInBase / category[toUnit];
   };
-
   const convertedValue = convertUnit();
-
   const getUnits = () => {
     if (unitCategory === "Length") {
       return [
@@ -438,7 +413,6 @@ export default function ToolsPage() {
         "Inch",
       ];
     }
-
     if (unitCategory === "Weight") {
       return [
         "Kilogram",
@@ -449,33 +423,26 @@ export default function ToolsPage() {
         "Tonne",
       ];
     }
-
     return ["Celsius", "Fahrenheit", "Kelvin"];
   };
-
   const handleUnitCategoryChange = (category: string) => {
     setUnitCategory(category);
-
     if (category === "Length") {
       setFromUnit("Meter");
       setToUnit("Kilometer");
     }
-
     if (category === "Weight") {
       setFromUnit("Kilogram");
       setToUnit("Gram");
     }
-
     if (category === "Temperature") {
       setFromUnit("Celsius");
       setToUnit("Fahrenheit");
     }
   };
-
   /* =========================================================
      AGE CALCULATION
   ========================================================= */
-
   const ageCalculation = useMemo(() => {
     if (!fromDate || !toDate) {
       return {
@@ -487,18 +454,14 @@ export default function ToolsPage() {
         totalDays: 0,
       };
     }
-
     const [fromYear, fromMonth, fromDay] = fromDate
       .split("-")
       .map(Number);
-
     const [toYear, toMonth, toDay] = toDate
       .split("-")
       .map(Number);
-
     const fromUTC = Date.UTC(fromYear, fromMonth - 1, fromDay);
     const toUTC = Date.UTC(toYear, toMonth - 1, toDay);
-
     if (toUTC < fromUTC) {
       return {
         valid: false,
@@ -509,30 +472,23 @@ export default function ToolsPage() {
         totalDays: 0,
       };
     }
-
     let years = toYear - fromYear;
     let months = toMonth - fromMonth;
     let days = toDay - fromDay;
-
     if (days < 0) {
       months--;
-
       const daysInPreviousMonth = new Date(
         Date.UTC(toYear, toMonth - 1, 0)
       ).getUTCDate();
-
       days += daysInPreviousMonth;
     }
-
     if (months < 0) {
       years--;
       months += 12;
     }
-
     const totalDays = Math.floor(
       (toUTC - fromUTC) / (1000 * 60 * 60 * 24)
     );
-
     return {
       valid: true,
       message: "",
@@ -542,11 +498,9 @@ export default function ToolsPage() {
       totalDays,
     };
   }, [fromDate, toDate]);
-
   /* =========================================================
      CURRENCY FORMAT
   ========================================================= */
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -554,80 +508,52 @@ export default function ToolsPage() {
       maximumFractionDigits: 0,
     }).format(value);
   };
-
   const interestPercentage =
     calculations.totalPayment > 0
       ? (calculations.totalInterest / calculations.totalPayment) * 100
       : 0;
-
   const principalPercentage = 100 - interestPercentage;
-
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f7f4] text-gray-900">
-
       {/* HEADER */}
       <SiteHeader />
-
       {/* ======================================================
           HERO
       ======================================================= */}
-
       <section className="relative overflow-hidden">
-
-        <div className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-orange-300/25 blur-3xl" />
-
-        <div className="pointer-events-none absolute -left-40 top-48 h-[420px] w-[420px] rounded-full bg-yellow-300/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-6 py-24 md:py-32">
-
+        <div className="pointer-events-none absolute -right-40 -top-40 h-[320px] w-[320px] rounded-full bg-orange-300/25 blur-3xl" />
+        <div className="pointer-events-none absolute -left-40 top-48 h-[280px] w-[280px] rounded-full bg-yellow-300/20 blur-3xl" />
+        <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 md:py-14">
           <div className="max-w-4xl">
-
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/70 px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm backdrop-blur-md">
-
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/70 px-3 py-1.5 text-xs font-semibold sm:text-sm text-orange-600 shadow-sm backdrop-blur-md">
               <span className="h-2 w-2 animate-pulse rounded-full bg-orange-500" />
-
               Free Online Tools
-
             </div>
-
-            <h1 className="mt-6 text-5xl font-black tracking-tight md:text-7xl">
-
+            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl md:text-5xl">
               Useful tools.
               <br />
-
               <span className="text-orange-500">
                 Simple to use.
               </span>
-
             </h1>
-
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-gray-600 md:text-xl">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base sm:leading-7">
               Free and practical tools designed to help you work faster,
               organize information and solve everyday digital tasks.
             </p>
-
           </div>
-
         </div>
-
       </section>
-
       {/* ======================================================
           CATEGORY FILTER
       ======================================================= */}
-
-      <section className="mx-auto max-w-7xl px-6">
-
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-
-          <div className="flex gap-3 overflow-x-auto pb-1">
-
+      <section className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-2.5 shadow-sm sm:p-3">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {categories.map((category) => (
-
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${
                   selectedCategory === category
                     ? "bg-gray-900 text-white shadow-md"
                     : "border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
@@ -635,63 +561,39 @@ export default function ToolsPage() {
               >
                 {category}
               </button>
-
             ))}
-
           </div>
-
         </div>
-
       </section>
-
       {/* ======================================================
           TOOLS
       ======================================================= */}
-
-      <section className="mx-auto max-w-7xl px-6 py-20">
-
-        <div className="mb-12">
-
-          <p className="text-sm font-bold uppercase tracking-[0.25em] text-orange-500">
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-500 sm:text-xs">
             Tool Library
           </p>
-
-          <h2 className="mt-3 text-4xl font-black">
+          <h2 className="mt-1 text-2xl font-black sm:text-3xl">
             Choose a tool.
           </h2>
-
-          <p className="mt-4 max-w-2xl text-gray-600">
-            Browse our collection of practical digital tools. More tools will
-            be added as MindraInfo grows.
+          <p className="mt-2 max-w-2xl text-sm text-gray-600">
+            Browse practical tools for PDFs, images, text, data, calculations and more.
           </p>
-
         </div>
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filteredTools.map((tool) => (
-
             <article
               key={tool.id}
-              className="group relative overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:border-orange-300 hover:shadow-xl"
+              className="group relative flex h-full min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md sm:p-4"
             >
-
-              <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-orange-200/25 blur-2xl transition group-hover:bg-orange-300/40" />
-
-              <div className="relative z-10">
-
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-3xl font-bold text-orange-500 transition duration-300 group-hover:scale-110">
-                  {tool.icon}
-                </div>
-
-                <div className="mt-7 flex items-start justify-between gap-4">
-
-                  <h3 className="text-2xl font-black">
-                    {tool.name}
-                  </h3>
-
+              <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-orange-200/25 blur-2xl transition group-hover:bg-orange-300/40" />
+              <div className="relative z-10 flex h-full flex-col">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-xl font-bold text-orange-500 transition duration-200 group-hover:scale-105 sm:h-11 sm:w-11">
+                    {tool.icon}
+                  </div>
                   <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                    className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-bold uppercase tracking-wide sm:text-[9px] ${
                       tool.status === "Available"
                         ? "bg-green-50 text-green-600"
                         : "bg-gray-100 text-gray-500"
@@ -699,25 +601,35 @@ export default function ToolsPage() {
                   >
                     {tool.status}
                   </span>
-
                 </div>
-
-                <p className="mt-3 text-sm leading-7 text-gray-600">
+                <h3 className="mt-3 min-h-[2.5rem] text-sm font-extrabold leading-5 sm:text-base">
+                  {tool.name}
+                </h3>
+                <p className="mt-1 line-clamp-2 min-h-[2.4rem] text-xs leading-5 text-gray-600">
                   {tool.description}
                 </p>
-
                 {tool.target ? (
                   tool.target.startsWith("/") ? (
                     <Link
                       href={tool.target}
-                      className="mt-7 flex w-full items-center justify-center rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-600"
+                      className="mt-auto flex w-full items-center justify-center rounded-lg bg-orange-500 px-2.5 py-2 text-[11px] font-bold text-white transition hover:bg-orange-600 sm:mt-3 sm:py-2.5 sm:text-xs"
                     >
                       Open Tool →
                     </Link>
                   ) : (
                     <a
                       href={`#${tool.target}`}
-                      className="mt-7 flex w-full items-center justify-center rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-600"
+                      onClick={() => {
+                        const section = document.getElementById(tool.target);
+                        const details = section?.querySelector<HTMLDetailsElement>("details.tool-accordion");
+                        if (details) {
+                          document.querySelectorAll<HTMLDetailsElement>("details.tool-accordion").forEach((panel) => {
+                            if (panel !== details) panel.open = false;
+                          });
+                          details.open = true;
+                        }
+                      }}
+                      className="mt-auto flex w-full items-center justify-center rounded-lg bg-orange-500 px-2.5 py-2 text-[11px] font-bold text-white transition hover:bg-orange-600 sm:mt-3 sm:py-2.5 sm:text-xs"
                     >
                       Open Tool →
                     </a>
@@ -725,76 +637,65 @@ export default function ToolsPage() {
                 ) : (
                   <button
                     disabled
-                    className="mt-7 w-full cursor-not-allowed rounded-xl bg-gray-100 px-5 py-3.5 text-sm font-bold text-gray-400"
+                    className="mt-auto w-full cursor-not-allowed rounded-lg bg-gray-100 px-2.5 py-2 text-[11px] font-bold text-gray-400 sm:mt-3 sm:py-2.5 sm:text-xs"
                   >
                     Coming Soon
                   </button>
                 )}
-
               </div>
-
             </article>
-
           ))}
-
         </div>
-
       </section>
-
       {/* ======================================================
           EMI CALCULATOR
       ======================================================= */}
-
-      <section
+      {(selectedCategory === "All Tools" || selectedCategory === "Calculators") && (
+<section
         id="emi-calculator"
         className="scroll-mt-10 border-y border-gray-200 bg-white"
       >
-
-        <div className="mx-auto max-w-7xl px-6 py-20">
-
-          <div className="mx-auto max-w-3xl text-center">
-
+        <details name="mindrainfo-inline-tool" className="tool-accordion group mx-auto block max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-orange-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:px-5">
+          <span className="min-w-0">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-orange-500">Financial calculator</span>
+            <span className="block truncate text-sm font-extrabold text-gray-900 sm:text-base">EMI Calculator</span>
+            <span className="mt-0.5 block truncate text-xs text-gray-500">Estimate monthly payment, interest and total repayment.</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 text-xs font-bold text-orange-600">
+            <span className="hidden sm:inline">Open</span>
+            <span className="tool-accordion-chevron text-base leading-none">⌄</span>
+          </span>
+        </summary>
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
+          <div className="sr-only">
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-orange-500">
               Financial Calculator
             </p>
-
             <h2 className="mt-3 text-4xl font-black md:text-5xl">
               EMI Calculator
             </h2>
-
             <p className="mt-5 text-lg leading-8 text-gray-600">
               Calculate your estimated monthly loan EMI, total interest and
               total repayment amount.
             </p>
-
           </div>
-
-          <div className="mt-14 grid gap-8 lg:grid-cols-2">
-
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
             {/* INPUTS */}
-
-            <div className="rounded-[2rem] border border-gray-200 bg-white p-7 shadow-sm md:p-9">
-
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
               <h3 className="text-2xl font-black">
                 Loan Details
               </h3>
-
               {/* LOAN AMOUNT */}
-
               <div className="mt-8">
-
                 <div className="flex items-center justify-between">
-
                   <label className="font-semibold">
                     Loan Amount
                   </label>
-
                   <span className="font-bold text-orange-500">
                     {formatCurrency(loanAmount)}
                   </span>
-
                 </div>
-
                 <input
                   type="range"
                   min="10000"
@@ -806,7 +707,6 @@ export default function ToolsPage() {
                   }
                   className="mt-5 w-full accent-orange-500"
                 />
-
                 <input
                   type="number"
                   min="10000"
@@ -817,25 +717,17 @@ export default function ToolsPage() {
                   }
                   className="mt-4 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold outline-none focus:border-orange-500"
                 />
-
               </div>
-
               {/* INTEREST */}
-
               <div className="mt-8">
-
                 <div className="flex items-center justify-between">
-
                   <label className="font-semibold">
                     Interest Rate
                   </label>
-
                   <span className="font-bold text-orange-500">
                     {interestRate.toFixed(2)}%
                   </span>
-
                 </div>
-
                 <input
                   type="range"
                   min="1"
@@ -847,7 +739,6 @@ export default function ToolsPage() {
                   }
                   className="mt-5 w-full accent-orange-500"
                 />
-
                 <input
                   type="number"
                   min="1"
@@ -859,25 +750,17 @@ export default function ToolsPage() {
                   }
                   className="mt-4 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold outline-none focus:border-orange-500"
                 />
-
               </div>
-
               {/* TENURE */}
-
               <div className="mt-8">
-
                 <div className="flex items-center justify-between">
-
                   <label className="font-semibold">
                     Loan Tenure
                   </label>
-
                   <span className="font-bold text-orange-500">
                     {loanTenure} Years
                   </span>
-
                 </div>
-
                 <input
                   type="range"
                   min="1"
@@ -888,7 +771,6 @@ export default function ToolsPage() {
                   }
                   className="mt-5 w-full accent-orange-500"
                 />
-
                 <input
                   type="number"
                   min="1"
@@ -899,150 +781,115 @@ export default function ToolsPage() {
                   }
                   className="mt-4 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold outline-none focus:border-orange-500"
                 />
-
               </div>
-
             </div>
-
             {/* RESULTS */}
-
-            <div className="rounded-[2rem] bg-gray-900 p-7 text-white shadow-xl md:p-9">
-
+            <div className="rounded-2xl bg-gray-900 p-4 text-white shadow-md sm:p-6">
               <p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-400">
                 Monthly EMI
               </p>
-
               <div className="mt-3 text-5xl font-black">
                 {formatCurrency(calculations.emi)}
               </div>
-
               <div className="mt-10 space-y-5">
-
                 <div className="flex justify-between border-b border-white/10 pb-5">
-
                   <span className="text-gray-400">
                     Principal
                   </span>
-
                   <span className="font-bold">
                     {formatCurrency(loanAmount)}
                   </span>
-
                 </div>
-
                 <div className="flex justify-between border-b border-white/10 pb-5">
-
                   <span className="text-gray-400">
                     Total Interest
                   </span>
-
                   <span className="font-bold text-orange-400">
                     {formatCurrency(calculations.totalInterest)}
                   </span>
-
                 </div>
-
                 <div className="flex justify-between">
-
                   <span className="text-gray-400">
                     Total Payment
                   </span>
-
                   <span className="font-bold">
                     {formatCurrency(calculations.totalPayment)}
                   </span>
-
                 </div>
-
               </div>
-
               <div className="mt-10">
-
                 <div className="flex h-4 overflow-hidden rounded-full bg-white/10">
-
                   <div
                     className="bg-orange-500"
                     style={{
                       width: `${principalPercentage}%`,
                     }}
                   />
-
                   <div
                     className="bg-orange-300"
                     style={{
                       width: `${interestPercentage}%`,
                     }}
                   />
-
                 </div>
-
                 <div className="mt-3 flex justify-between text-xs">
-
                   <span className="text-orange-500">
                     Principal
                   </span>
-
                   <span className="text-orange-300">
                     Interest
                   </span>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
+      </details>
       </section>
-
+)}
       {/* ======================================================
           PERCENTAGE CALCULATOR
       ======================================================= */}
-
-      <section
+      {(selectedCategory === "All Tools" || selectedCategory === "Calculators") && (
+<section
         id="percentage-calculator"
         className="scroll-mt-10 bg-[#f7f7f4]"
       >
-
-        <div className="mx-auto max-w-7xl px-6 py-20">
-
-          <div className="mx-auto max-w-3xl text-center">
-
+        <details name="mindrainfo-inline-tool" className="tool-accordion group mx-auto block max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-orange-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:px-5">
+          <span className="min-w-0">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-orange-500">Math tool</span>
+            <span className="block truncate text-sm font-extrabold text-gray-900 sm:text-base">Percentage Calculator</span>
+            <span className="mt-0.5 block truncate text-xs text-gray-500">Find a percentage or compare a change between values.</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 text-xs font-bold text-orange-600">
+            <span className="hidden sm:inline">Open</span>
+            <span className="tool-accordion-chevron text-base leading-none">⌄</span>
+          </span>
+        </summary>
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
+          <div className="sr-only">
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-orange-500">
               Math Tool
             </p>
-
             <h2 className="mt-3 text-4xl font-black md:text-5xl">
               Percentage Calculator
             </h2>
-
             <p className="mt-5 text-lg text-gray-600">
               Quickly calculate percentages and percentage changes.
             </p>
-
           </div>
-
-          <div className="mt-14 grid gap-8 md:grid-cols-2">
-
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
             {/* BASIC PERCENTAGE */}
-
-            <div className="rounded-[2rem] border border-gray-200 bg-white p-8 shadow-sm">
-
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
               <h3 className="text-2xl font-black">
                 What is X% of Y?
               </h3>
-
-              <div className="mt-8 grid gap-5">
-
+              <div className="mt-5 grid gap-4">
                 <div>
-
                   <label className="text-sm font-semibold">
                     Percentage
                   </label>
-
                   <input
                     type="number"
                     value={percentage}
@@ -1051,15 +898,11 @@ export default function ToolsPage() {
                     }
                     className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold outline-none focus:border-orange-500"
                   />
-
                 </div>
-
                 <div>
-
                   <label className="text-sm font-semibold">
                     Number
                   </label>
-
                   <input
                     type="number"
                     value={percentageOf}
@@ -1068,45 +911,30 @@ export default function ToolsPage() {
                     }
                     className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold outline-none focus:border-orange-500"
                   />
-
                 </div>
-
               </div>
-
               <div className="mt-8 rounded-2xl bg-orange-50 p-6">
-
                 <p className="text-sm text-gray-600">
                   Result
                 </p>
-
                 <p className="mt-2 text-4xl font-black text-orange-500">
                   {percentageResult.toLocaleString("en-IN")}
                 </p>
-
                 <p className="mt-2 text-sm text-gray-500">
                   {percentage}% of {percentageOf}
                 </p>
-
               </div>
-
             </div>
-
             {/* PERCENTAGE CHANGE */}
-
-            <div className="rounded-[2rem] border border-gray-200 bg-white p-8 shadow-sm">
-
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
               <h3 className="text-2xl font-black">
                 Percentage Change
               </h3>
-
-              <div className="mt-8 grid gap-5">
-
+              <div className="mt-5 grid gap-4">
                 <div>
-
                   <label className="text-sm font-semibold">
                     Original Value
                   </label>
-
                   <input
                     type="number"
                     value={originalValue}
@@ -1115,15 +943,11 @@ export default function ToolsPage() {
                     }
                     className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold outline-none focus:border-orange-500"
                   />
-
                 </div>
-
                 <div>
-
                   <label className="text-sm font-semibold">
                     New Value
                   </label>
-
                   <input
                     type="number"
                     value={newValue}
@@ -1132,79 +956,68 @@ export default function ToolsPage() {
                     }
                     className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold outline-none focus:border-orange-500"
                   />
-
                 </div>
-
               </div>
-
               <div className="mt-8 rounded-2xl bg-gray-900 p-6 text-white">
-
                 <p className="text-sm text-gray-400">
                   Percentage Change
                 </p>
-
                 <p className="mt-2 text-4xl font-black text-orange-400">
                   {percentageChange.toFixed(2)}%
                 </p>
-
                 <p className="mt-2 text-sm text-gray-400">
                   {percentageChange >= 0
                     ? "Increase"
                     : "Decrease"}
                 </p>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
+      </details>
       </section>
-
+)}
       {/* ======================================================
           UNIT CONVERTER
       ======================================================= */}
-
-      <section
+      {(selectedCategory === "All Tools" || selectedCategory === "Calculators") && (
+<section
         id="unit-converter"
         className="scroll-mt-10 border-y border-gray-200 bg-white"
       >
-
-        <div className="mx-auto max-w-7xl px-6 py-20">
-
-          <div className="mx-auto max-w-3xl text-center">
-
+        <details name="mindrainfo-inline-tool" className="tool-accordion group mx-auto block max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-orange-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:px-5">
+          <span className="min-w-0">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-orange-500">Conversion tool</span>
+            <span className="block truncate text-sm font-extrabold text-gray-900 sm:text-base">Unit Converter</span>
+            <span className="mt-0.5 block truncate text-xs text-gray-500">Convert length, weight and temperature.</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 text-xs font-bold text-orange-600">
+            <span className="hidden sm:inline">Open</span>
+            <span className="tool-accordion-chevron text-base leading-none">⌄</span>
+          </span>
+        </summary>
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
+          <div className="sr-only">
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-orange-500">
               Conversion Tool
             </p>
-
             <h2 className="mt-3 text-4xl font-black md:text-5xl">
               Unit Converter
             </h2>
-
             <p className="mt-5 text-lg text-gray-600">
               Convert length, weight and temperature instantly.
             </p>
-
           </div>
-
-          <div className="mx-auto mt-14 max-w-4xl rounded-[2rem] border border-gray-200 bg-white p-7 shadow-sm md:p-10">
-
+          <div className="mx-auto mt-4 max-w-4xl rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             {/* CATEGORY */}
-
             <div>
-
               <label className="text-sm font-semibold">
                 Conversion Type
               </label>
-
               <div className="mt-3 flex flex-wrap gap-3">
-
                 {["Length", "Weight", "Temperature"].map(
                   (category) => (
-
                     <button
                       key={category}
                       onClick={() =>
@@ -1218,22 +1031,15 @@ export default function ToolsPage() {
                     >
                       {category}
                     </button>
-
                   )
                 )}
-
               </div>
-
             </div>
-
             {/* VALUE */}
-
             <div className="mt-8">
-
               <label className="text-sm font-semibold">
                 Value
               </label>
-
               <input
                 type="number"
                 value={unitValue}
@@ -1242,19 +1048,13 @@ export default function ToolsPage() {
                 }
                 className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-lg font-bold outline-none focus:border-orange-500"
               />
-
             </div>
-
             {/* FROM / TO */}
-
-            <div className="mt-8 grid gap-5 md:grid-cols-[1fr_auto_1fr] md:items-end">
-
+            <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-end">
               <div>
-
                 <label className="text-sm font-semibold">
                   From
                 </label>
-
                 <select
                   value={fromUnit}
                   onChange={(e) =>
@@ -1262,32 +1062,23 @@ export default function ToolsPage() {
                   }
                   className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 font-semibold outline-none focus:border-orange-500"
                 >
-
                   {getUnits().map((unit) => (
-
                     <option
                       key={unit}
                       value={unit}
                     >
                       {unit}
                     </option>
-
                   ))}
-
                 </select>
-
               </div>
-
               <div className="hidden pb-3 text-2xl font-bold text-orange-500 md:block">
                 →
               </div>
-
               <div>
-
                 <label className="text-sm font-semibold">
                   To
                 </label>
-
                 <select
                   value={toUnit}
                   onChange={(e) =>
@@ -1295,44 +1086,30 @@ export default function ToolsPage() {
                   }
                   className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 font-semibold outline-none focus:border-orange-500"
                 >
-
                   {getUnits().map((unit) => (
-
                     <option
                       key={unit}
                       value={unit}
                     >
                       {unit}
                     </option>
-
                   ))}
-
                 </select>
-
               </div>
-
             </div>
-
             {/* RESULT */}
-
             <div className="mt-10 rounded-3xl bg-gray-900 p-8 text-center text-white">
-
               <p className="text-sm text-gray-400">
                 Conversion Result
               </p>
-
               <p className="mt-3 break-words text-4xl font-black md:text-5xl">
-
                 {Number.isFinite(convertedValue)
                   ? convertedValue.toLocaleString("en-IN", {
                       maximumFractionDigits: 8,
                     })
                   : "Invalid"}
-
               </p>
-
               <p className="mt-3 text-gray-400">
-
                 {unitValue} {fromUnit} ={" "}
                 {Number.isFinite(convertedValue)
                   ? convertedValue.toLocaleString("en-IN", {
@@ -1340,88 +1117,73 @@ export default function ToolsPage() {
                     })
                   : "Invalid"}{" "}
                 {toUnit}
-
               </p>
-
             </div>
-
           </div>
-
         </div>
-
+      </details>
       </section>
-
+)}
       {/* ======================================================
           AGE CALCULATOR
       ======================================================= */}
-
-      <section
+      {(selectedCategory === "All Tools" || selectedCategory === "Calculators") && (
+<section
         id="age-calculator"
         className="scroll-mt-10 border-y border-gray-200 bg-[#f7f7f4]"
       >
-
-        <div className="mx-auto max-w-7xl px-6 py-20">
-
+        <details name="mindrainfo-inline-tool" className="tool-accordion group mx-auto block max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-orange-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:px-5">
+          <span className="min-w-0">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-orange-500">Date tool</span>
+            <span className="block truncate text-sm font-extrabold text-gray-900 sm:text-base">Age Calculator</span>
+            <span className="mt-0.5 block truncate text-xs text-gray-500">Calculate the exact difference between two dates.</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 text-xs font-bold text-orange-600">
+            <span className="hidden sm:inline">Open</span>
+            <span className="tool-accordion-chevron text-base leading-none">⌄</span>
+          </span>
+        </summary>
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
           {/* HEADER */}
-
-          <div className="mx-auto max-w-3xl text-center">
-
+          <div className="sr-only">
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-orange-500">
               Date & Time Tool
             </p>
-
             <h2 className="mt-3 text-4xl font-black md:text-5xl">
               Age Calculator
             </h2>
-
             <p className="mt-5 text-lg leading-8 text-gray-600">
               Calculate your exact age between two dates in years, months
               and days.
             </p>
-
           </div>
-
           {/* CALCULATOR */}
-
-          <div className="mx-auto mt-14 max-w-5xl overflow-hidden rounded-[2.5rem] border border-gray-200 bg-white shadow-xl">
-
+          <div className="mx-auto mt-4 max-w-5xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
             <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
-
               {/* LEFT SIDE */}
-
               <div className="p-7 md:p-10">
-
                 <div className="flex items-center gap-3">
-
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-3xl">
                     🎂
                   </div>
-
                   <div>
-
                     <p className="text-sm font-bold uppercase tracking-wider text-orange-500">
                       Find your age
                     </p>
-
                     <h3 className="text-2xl font-black">
                       Enter two dates
                     </h3>
-
                   </div>
-
                 </div>
-
                 {/* FROM DATE */}
-
                 <div className="mt-10">
-
                   <label
                     htmlFor="age-from-date"
                     className="text-sm font-bold text-gray-700"
                   >
                     From Date
                   </label>
-
                   <input
                     id="age-from-date"
                     type="date"
@@ -1431,24 +1193,18 @@ export default function ToolsPage() {
                     }
                     className="mt-3 w-full cursor-pointer rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-base font-semibold text-gray-800 outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                   />
-
                   <p className="mt-2 text-xs text-gray-500">
                     Usually your date of birth.
                   </p>
-
                 </div>
-
                 {/* TO DATE */}
-
                 <div className="mt-7">
-
                   <label
                     htmlFor="age-to-date"
                     className="text-sm font-bold text-gray-700"
                   >
                     To Date
                   </label>
-
                   <input
                     id="age-to-date"
                     type="date"
@@ -1458,15 +1214,11 @@ export default function ToolsPage() {
                     }
                     className="mt-3 w-full cursor-pointer rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-base font-semibold text-gray-800 outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                   />
-
                   <p className="mt-2 text-xs text-gray-500">
                     The date on which you want to calculate the age.
                   </p>
-
                 </div>
-
                 {/* QUICK ACTION */}
-
                 <button
                   type="button"
                   onClick={() =>
@@ -1476,206 +1228,148 @@ export default function ToolsPage() {
                 >
                   Use Today
                 </button>
-
               </div>
-
               {/* RIGHT SIDE */}
-
               <div className="relative overflow-hidden bg-gray-900 p-7 text-white md:p-10">
-
                 {/* DECORATIVE GLOW */}
-
                 <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-500/20 blur-3xl" />
-
                 <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-yellow-400/10 blur-3xl" />
-
                 {/* GROWING STICKER */}
-
                 <div className="relative flex h-52 items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04]">
-
                   <div className="absolute inset-x-0 bottom-5 h-px bg-white/10" />
-
                   <div className="age-growth-stage age-child">
                     🧒
                   </div>
-
                   <div className="age-growth-stage age-teen">
                     🧑
                   </div>
-
                   <div className="age-growth-stage age-young">
                     🧑‍💼
                   </div>
-
                   <div className="absolute bottom-3 left-0 right-0 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-white/30">
                     Growing through life
                   </div>
-
                 </div>
-
                 {/* RESULT */}
-
                 <div className="relative mt-8">
-
                   <p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-400">
                     Exact Age
                   </p>
-
                   {ageCalculation.valid ? (
-
                     <>
                       <div className="mt-4 grid grid-cols-3 gap-3">
-
                         <div className="rounded-2xl bg-white/10 p-4 text-center backdrop-blur">
-
                           <div className="text-4xl font-black">
                             {ageCalculation.years}
                           </div>
-
                           <div className="mt-1 text-xs font-semibold text-gray-400">
                             Years
                           </div>
-
                         </div>
-
                         <div className="rounded-2xl bg-white/10 p-4 text-center backdrop-blur">
-
                           <div className="text-4xl font-black">
                             {ageCalculation.months}
                           </div>
-
                           <div className="mt-1 text-xs font-semibold text-gray-400">
                             Months
                           </div>
-
                         </div>
-
                         <div className="rounded-2xl bg-white/10 p-4 text-center backdrop-blur">
-
                           <div className="text-4xl font-black">
                             {ageCalculation.days}
                           </div>
-
                           <div className="mt-1 text-xs font-semibold text-gray-400">
                             Days
                           </div>
-
                         </div>
-
                       </div>
-
                       <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-
                         <div className="flex items-center justify-between gap-4">
-
                           <span className="text-sm text-gray-400">
                             Total days
                           </span>
-
                           <span className="font-black text-orange-400">
                             {ageCalculation.totalDays.toLocaleString(
                               "en-IN"
                             )}
                           </span>
-
                         </div>
-
                       </div>
                     </>
-
                   ) : (
-
                     <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-6">
-
                       <div className="text-4xl">
                         📅
                       </div>
-
                       <p className="mt-4 text-sm leading-6 text-gray-400">
                         {ageCalculation.message}
                       </p>
-
                     </div>
-
                   )}
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
           {/* INFO */}
-
           <div className="mx-auto mt-8 max-w-5xl rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
-
             <div className="flex gap-3">
-
               <div className="text-xl">
                 💡
               </div>
-
               <p className="text-sm leading-6 text-gray-600">
                 Enter your date of birth in <strong>From Date</strong> and
                 another date in <strong>To Date</strong>. The calculator
                 gives the difference in complete years, months and days.
               </p>
-
             </div>
-
           </div>
-
         </div>
-
+      </details>
       </section>
+)}
             {/* ======================================================
           TRANSLATOR
       ======================================================= */}
-
-      <section
+      {(selectedCategory === "All Tools" || selectedCategory === "Text") && (
+<section
         id="translator"
         className="scroll-mt-10 border-y border-gray-200 bg-white"
       >
-
-        <div className="mx-auto max-w-7xl px-6 py-20">
-
+        <details name="mindrainfo-inline-tool" className="tool-accordion group mx-auto block max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-orange-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:px-5">
+          <span className="min-w-0">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-orange-500">Language tool</span>
+            <span className="block truncate text-sm font-extrabold text-gray-900 sm:text-base">Translator</span>
+            <span className="mt-0.5 block truncate text-xs text-gray-500">Translate between English and Indian languages.</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 text-xs font-bold text-orange-600">
+            <span className="hidden sm:inline">Open</span>
+            <span className="tool-accordion-chevron text-base leading-none">⌄</span>
+          </span>
+        </summary>
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
           {/* HEADER */}
-
-          <div className="mx-auto max-w-3xl text-center">
-
+          <div className="sr-only">
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-orange-500">
               Language Tool
             </p>
-
             <h2 className="mt-3 text-4xl font-black md:text-5xl">
               Translator
             </h2>
-
             <p className="mt-5 text-lg leading-8 text-gray-600">
               Translate naturally between English and Indian languages,
               including Odia, Hindi, Bengali, Tamil, Telugu and many more.
             </p>
-
           </div>
-
           {/* TRANSLATOR CARD */}
-
-          <div className="mx-auto mt-14 max-w-6xl rounded-[2.5rem] border border-gray-200 bg-white p-6 shadow-xl md:p-10">
-
+          <div className="mx-auto mt-4 max-w-6xl rounded-2xl border border-gray-200 bg-white p-4 shadow-md sm:p-6">
             {/* LANGUAGE BAR */}
-
             <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-end">
-
               {/* SOURCE */}
-
               <div>
-
                 <label className="text-sm font-bold text-gray-700">
                   Translate From
                 </label>
-
                 <select
                   value={sourceLanguage}
                   onChange={(e) => {
@@ -1684,24 +1378,17 @@ export default function ToolsPage() {
                   }}
                   className="mt-3 w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 font-semibold text-gray-800 outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                 >
-
                   {languages.map((language) => (
-
                     <option
                       key={language.code}
                       value={language.code}
                     >
                       {language.name}
                     </option>
-
                   ))}
-
                 </select>
-
               </div>
-
               {/* SWAP */}
-
               <button
                 type="button"
                 onClick={swapLanguages}
@@ -1710,15 +1397,11 @@ export default function ToolsPage() {
               >
                 ⇄
               </button>
-
               {/* TARGET */}
-
               <div>
-
                 <label className="text-sm font-bold text-gray-700">
                   Translate To
                 </label>
-
                 <select
                   value={targetLanguage}
                   onChange={(e) => {
@@ -1727,38 +1410,25 @@ export default function ToolsPage() {
                   }}
                   className="mt-3 w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 font-semibold text-gray-800 outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                 >
-
                   {languages.map((language) => (
-
                     <option
                       key={language.code}
                       value={language.code}
                     >
                       {language.name}
                     </option>
-
                   ))}
-
                 </select>
-
               </div>
-
             </div>
-
             {/* TEXT AREAS */}
-
             <div className="mt-8 grid gap-6 lg:grid-cols-2">
-
               {/* INPUT */}
-
               <div className="relative">
-
                 <div className="mb-3 flex items-center justify-between">
-
                   <label className="text-sm font-bold text-gray-700">
                     Your Text
                   </label>
-
                   <span
                     className={`text-xs font-semibold ${
                       translationInput.length > 2000
@@ -1768,9 +1438,7 @@ export default function ToolsPage() {
                   >
                     {translationInput.length}/2000
                   </span>
-
                 </div>
-
                 <textarea
                   value={translationInput}
                   onChange={(e) => {
@@ -1781,21 +1449,14 @@ export default function ToolsPage() {
                   placeholder="Type or paste your text here..."
                   className="min-h-[280px] w-full resize-none rounded-3xl border border-gray-200 bg-gray-50 p-6 text-base leading-7 text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                 />
-
               </div>
-
               {/* RESULT */}
-
               <div>
-
                 <div className="mb-3 flex items-center justify-between">
-
                   <label className="text-sm font-bold text-gray-700">
                     Translation
                   </label>
-
                   {translationResult && (
-
                     <button
                       type="button"
                       onClick={copyTranslation}
@@ -1803,71 +1464,44 @@ export default function ToolsPage() {
                     >
                       Copy
                     </button>
-
                   )}
-
                 </div>
-
                 <div className="min-h-[280px] rounded-3xl border border-gray-200 bg-gray-900 p-6 text-white">
-
                   {isTranslating ? (
-
                     <div className="flex min-h-[230px] flex-col items-center justify-center text-center">
-
                       <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-orange-400" />
-
                       <p className="mt-5 text-sm font-semibold text-gray-400">
                         Translating...
                       </p>
-
                     </div>
-
                   ) : translationError ? (
-
                     <div className="flex min-h-[230px] flex-col items-center justify-center text-center">
-
                       <div className="text-4xl">
                         ⚠️
                       </div>
-
                       <p className="mt-4 max-w-md text-sm leading-6 text-red-300">
                         {translationError}
                       </p>
-
                     </div>
-
                   ) : translationResult ? (
-
                     <p className="whitespace-pre-wrap text-base leading-8 text-gray-100">
                       {translationResult}
                     </p>
-
                   ) : (
-
                     <div className="flex min-h-[230px] flex-col items-center justify-center text-center">
-
                       <div className="text-5xl">
                         🌐
                       </div>
-
                       <p className="mt-5 text-sm font-semibold text-gray-400">
                         Your translated text will appear here.
                       </p>
-
                     </div>
-
                   )}
-
                 </div>
-
               </div>
-
             </div>
-
             {/* TRANSLATE BUTTON */}
-
             <div className="mt-7 flex flex-col items-center gap-4">
-
               <button
                 type="button"
                 onClick={handleTranslate}
@@ -1878,48 +1512,53 @@ export default function ToolsPage() {
                   ? "Translating..."
                   : "Translate →"}
               </button>
-
               <p className="text-center text-xs text-gray-400">
                 Supports English and 22 Indian languages.
               </p>
-
             </div>
-
           </div>
-
         </div>
-
+      </details>
       </section>
-      
+)}
       {/* ======================================================
           FOOTER
       ======================================================= */}
-
       <footer className="border-t border-gray-200 bg-white">
-
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-gray-500 md:flex-row">
-
           <p>
             © 2026 MindraInfo. All rights reserved.
           </p>
-
           <Link
             href="/"
             className="font-semibold text-orange-500 hover:text-orange-600"
           >
             Back to MindraInfo →
           </Link>
-
         </div>
-
       </footer>
-
       {/* ======================================================
           AGE GROWTH ANIMATION
       ======================================================= */}
-
       <style jsx global>{`
-
+        .tool-accordion > summary {
+          list-style: none;
+        }
+        .tool-accordion > summary::-webkit-details-marker {
+          display: none;
+        }
+        .tool-accordion-chevron {
+          display: inline-block;
+          transition: transform 180ms ease;
+        }
+        .tool-accordion[open] .tool-accordion-chevron {
+          transform: rotate(180deg);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .tool-accordion-chevron {
+            transition: none;
+          }
+        }
         .age-growth-stage {
           position: absolute;
           display: flex;
@@ -1931,129 +1570,98 @@ export default function ToolsPage() {
           animation-iteration-count: infinite;
           animation-timing-function: ease-in-out;
         }
-
         .age-child {
           font-size: 4.5rem;
           animation-name: ageChildGrowth;
         }
-
         .age-teen {
           font-size: 5.5rem;
           animation-name: ageTeenGrowth;
         }
-
         .age-young {
           font-size: 6.5rem;
           animation-name: ageYoungGrowth;
         }
-
         @keyframes ageChildGrowth {
-
           0% {
             opacity: 1;
             transform: translateY(10px) scale(0.85);
           }
-
           25% {
             opacity: 1;
             transform: translateY(0) scale(1);
           }
-
           33% {
             opacity: 0;
             transform: translateY(-4px) scale(1.08);
           }
-
           100% {
             opacity: 0;
             transform: translateY(-4px) scale(1.08);
           }
-
         }
-
         @keyframes ageTeenGrowth {
-
           0% {
             opacity: 0;
             transform: translateY(10px) scale(0.75);
           }
-
           25% {
             opacity: 0;
             transform: translateY(5px) scale(0.8);
           }
-
           33% {
             opacity: 1;
             transform: translateY(0) scale(0.95);
           }
-
           55% {
             opacity: 1;
             transform: translateY(0) scale(1);
           }
-
           66% {
             opacity: 0;
             transform: translateY(-5px) scale(1.08);
           }
-
           100% {
             opacity: 0;
             transform: translateY(-5px) scale(1.08);
           }
-
         }
-
         @keyframes ageYoungGrowth {
-
           0% {
             opacity: 0;
             transform: translateY(10px) scale(0.7);
           }
-
           55% {
             opacity: 0;
             transform: translateY(5px) scale(0.8);
           }
-
           66% {
             opacity: 1;
             transform: translateY(0) scale(0.95);
           }
-
           85% {
             opacity: 1;
             transform: translateY(-2px) scale(1);
           }
-
           100% {
             opacity: 0;
             transform: translateY(-8px) scale(1.08);
           }
-
         }
-
         @media (prefers-reduced-motion: reduce) {
-
           .age-growth-stage {
             animation: none;
           }
-
           .age-child {
             opacity: 1;
             transform: scale(1);
           }
-
           .age-teen,
           .age-young {
             opacity: 0;
           }
-
         }
-
       `}</style>
-
     </main>
   );
 }

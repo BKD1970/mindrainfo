@@ -15,9 +15,17 @@ import {
   Zap,
   Lock,
   Sparkles,
+  Edit3Icon,
 } from "lucide-react";
 
 const tools = [
+  {
+    title: "Edit Your PDF",
+    description: "Free Online PDF Editor.",
+    icon: Edit3Icon,
+    color: "violet",
+    href: "/tools/pdf/pdf-editor",
+  },
   {
     title: "Merge PDF",
     description: "Combine multiple PDF files into one document.",
@@ -192,7 +200,7 @@ export default function PdfToolsPage() {
         </div>
 
         {/* HERO */}
-        <section className="relative mt-10 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
+        <section className="relative mt-10 overflow-hidden rounded-4x1 border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
 
           <div className="absolute right-0 top-0 h-72 w-72 translate-x-1/3 -translate-y-1/3 rounded-full bg-violet-100 blur-3xl" />
           <div className="absolute bottom-0 left-1/2 h-48 w-48 rounded-full bg-cyan-100/60 blur-3xl" />
@@ -214,7 +222,7 @@ export default function PdfToolsPage() {
 
               <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                 Everything you need to
-                <span className="block bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                <span className="block bg-linear-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
                   work with PDF files.
                 </span>
               </h1>
@@ -285,7 +293,7 @@ export default function PdfToolsPage() {
                 <Link
                   key={tool.title}
                   href={tool.href}
-                  className={`group relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_45px_rgba(15,23,42,0.10)] ${styles.hover}`}
+                  className={`group relative overflow-hidden rounded-3x1 border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_45px_rgba(15,23,42,0.10)] ${styles.hover}`}
                 >
 
                   {/* HOVER GLOW */}
@@ -313,7 +321,7 @@ export default function PdfToolsPage() {
                       {tool.title}
                     </h3>
 
-                    <p className="mt-2 min-h-[48px] text-sm leading-6 text-slate-500">
+                    <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">
                       {tool.description}
                     </p>
 
@@ -331,7 +339,7 @@ export default function PdfToolsPage() {
         </section>
 
         {/* PRIVACY NOTICE */}
-        <section className="mt-12 overflow-hidden rounded-[1.75rem] border border-emerald-200 bg-gradient-to-r from-emerald-50 to-cyan-50">
+        <section className="mt-12 overflow-hidden rounded-[1.75rem] border border-emerald-200 bg-linear-to-r from-emerald-50 to-cyan-50">
 
           <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-8">
 
