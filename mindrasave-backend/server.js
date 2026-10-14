@@ -295,7 +295,7 @@ function downloadWithYtDlp(url, format, timestamp, res) {
   console.log(args.join(" "));
   console.log("========================================");
 
-  const ytDlp = spawn("yt-dlp", args);
+  const ytDlp = spawn("yt-dlp", ["--verbose", ...args]);
 
   let errorOutput = "";
 
