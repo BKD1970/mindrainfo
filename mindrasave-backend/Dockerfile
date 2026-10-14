@@ -38,4 +38,4 @@ ENV PATH="/root/.deno/bin:${PATH}"
 
 EXPOSE 4000
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "node /app/bgutil-ytdlp-pot-provider/server/build/main.js --host 127.0.0.1 --port 4416 & exec node server.js"]
