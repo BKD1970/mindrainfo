@@ -276,6 +276,13 @@ function downloadWithYtDlp(url, format, timestamp, res) {
     );
   }
 
+    if (isYouTubeUrl(url)) {
+    args.push(
+      "--extractor-args",
+      "youtubepot-bgutilhttp:base_url=http://127.0.0.1:4416"
+    );
+  }
+
   args.push(url);
 
   console.log("");
