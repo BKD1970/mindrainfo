@@ -277,11 +277,26 @@ function downloadWithYtDlp(url, format, timestamp, res) {
   }
 
     if (isYouTubeUrl(url)) {
-    args.push(
-      "--extractor-args",
-      "youtubepot-bgutilhttp:base_url=http://127.0.0.1:4416"
-    );
+  // Only use the optional cookies file for YouTube MP3.
+  if (format === "mp3") {
+    const cookiesFile = process.env.YT_DLP_COOKIES_FILE;
+
+    if (cookiesFile && fs.existsSync(cookiesFile)) {
+      args.push("--cookies", cookiesFile);
+      console.log("YouTube MP3 authentication cookies: configured");
+    } else {
+      console.log(
+        "YouTube MP3 authentication cookies: not configured"
+      );
+    }
   }
+
+  // Keep the existing BgUtils PO Token provider.
+  args.push(
+    "--extractor-args",
+    "youtubepot-bgutilhttp:base_url=http://127.0.0.1:4416"
+  );
+}
 
   args.push(url);
 
@@ -289,7 +304,7 @@ function downloadWithYtDlp(url, format, timestamp, res) {
   console.log("========================================");
   console.log(`MindraSave request: ${format.toUpperCase()}`);
   console.log(`URL: ${url}`);
-  console.log("YouTube: false");
+  console.log(`YouTube: ${isYouTubeUrl(url)}`);
   console.log("Using existing yt-dlp downloader");
   console.log("yt-dlp arguments:");
   console.log(args.join(" "));
@@ -443,9 +458,29 @@ app.post("/download", async (req, res) => {
   const timestamp = Date.now();
 
     /*
-    YouTube → Cobalt first, then yt-dlp fallback
-  */
-  if (isYouTubeUrl(cleanUrl)) {
+  YouTube MP3 → yt-dlp directly.
+  Avoid the currently rate-limited Cobalt service.
+  YouTube MP4 remains on its existing route.
+*/
+if (isYouTubeUrl(cleanUrl) && format === "mp3") {
+  console.log(
+    "YouTube MP3: using yt-dlp directly; bypassing Cobalt."
+  );
+
+  downloadWithYtDlp(
+    cleanUrl,
+    format,
+    timestamp,
+    res
+  );
+
+  return;
+}
+
+/*
+  Other YouTube formats → existing Cobalt-first route.
+*/
+if (isYouTubeUrl(cleanUrl)) {
     try {
       const result = await downloadFromCobalt(
         cleanUrl,
