@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mindrainfo.in"),
+  metadataBase: new URL("https://www.mindrainfo.in"),  
 
   title: {
     default: "MindraInfo | AI, Technology, Careers, Shop, Tools & Jobs",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     title: "MindraInfo | AI, Technology, Careers, Shop, Tools & Jobs",
     description:
       "Explore AI, technology, careers, jobs, data analytics, useful online tools, articles, and products on MindraInfo.",
-    url: "https://mindrainfo.in",
+    url: "https://www.mindrainfo.in",
   },
 
   twitter: {
