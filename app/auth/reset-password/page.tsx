@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function ResetPasswordPage() {
     const checkSession = async () => {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await supabaseBrowser.auth.getSession();
 
       if (!session) {
         setError(
@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
     setSaving(true);
 
     const { error: updateError } =
-      await supabase.auth.updateUser({
+      await supabaseBrowser.auth.updateUser({
         password,
       });
 
@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
       "Password updated successfully. Redirecting to admin login..."
     );
 
-    await supabase.auth.signOut();
+    await supabaseBrowser.auth.signOut();
 
     setTimeout(() => {
       router.replace("/admin/login");

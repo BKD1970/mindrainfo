@@ -12,6 +12,7 @@ const categories = [
   "Calculators",
   "AI",
   "Media",
+  "Miscellaneous",
 ];
 const tools = [
   {
@@ -25,7 +26,7 @@ const tools = [
     target: "/tools/pdf",
   },
     {
-    id: 14,
+    id: 2,
     name: "PDF Editor",
     icon: "✏️",
     category: "PDF",
@@ -35,7 +36,7 @@ const tools = [
     status: "Available",
   },
   {
-    id: 2,
+    id: 3,
     name: "Image Compressor",
     icon: "🖼️",
     category: "Images",
@@ -45,7 +46,7 @@ const tools = [
     status: "Available",
   },
   {
-    id: 3,
+    id: 4,
     name: "Text Formatter",
     icon: "✍️",
     category: "Text",
@@ -55,7 +56,7 @@ const tools = [
   target: "/tools/text-formatter",
   },
   {
-    id: 4,
+    id: 5,
     name: "JSON Formatter",
     icon: "{ }",
     category: "Developer",
@@ -65,7 +66,7 @@ const tools = [
     target: "/tools/json-formatter",
   },
   {
-    id: 5,
+    id: 6,
     name: "CSV Viewer",
     icon: "📊",
     category: "Data",
@@ -75,7 +76,7 @@ const tools = [
     target: "/tools/csv-viewer",
   },
   {
-    id: 6,
+    id: 7,
     name: "EMI Calculator",
     icon: "₹",
     category: "Calculators",
@@ -85,7 +86,7 @@ const tools = [
     target: "emi-calculator",
   },
   {
-    id: 7,
+    id: 8,
     name: "Percentage Calculator",
     icon: "%",
     category: "Calculators",
@@ -95,7 +96,7 @@ const tools = [
     target: "percentage-calculator",
   },
   {
-    id: 8,
+    id: 9,
     name: "Unit Converter",
     icon: "📐",
     category: "Calculators",
@@ -105,7 +106,7 @@ const tools = [
     target: "unit-converter",
   },
   {
-    id: 9,
+    id: 10,
     name: "Age Calculator",
     icon: "🎂",
     category: "Calculators",
@@ -115,7 +116,7 @@ const tools = [
     target: "age-calculator",
   },
   {
-    id: 10,
+    id: 11,
     name: "AI Prompt Helper",
     icon: "🤖",
     category: "AI",
@@ -125,7 +126,7 @@ const tools = [
   target: "/tools/ai-prompt-helper",
   },
   {
-    id: 11,
+    id: 12,
     name: "Word Counter",
     icon: "🔢",
     category: "Text",
@@ -135,7 +136,7 @@ const tools = [
   target: "/tools/word-counter",
   },
   {
-    id: 12,
+    id: 13,
     name: "MindraSave",
     icon: "⬇️",
     category: "Media",
@@ -145,7 +146,7 @@ const tools = [
     target: "/tools/mindrasave",
   },
   {
-    id: 13,
+    id: 14,
     name: "Translator",
     icon: "🌐",
     category: "Text",
@@ -153,6 +154,16 @@ const tools = [
       "Translate between English and Indian languages including Odia, Hindi and many more.",
     status: "Available",
     target: "translator",
+  },
+  {
+    id: 15,
+    name: "Miscellaneous Tools",
+    icon: "🦖",
+    category: "Miscellaneous",
+    description:
+      "Tools that helps computer hardware engineers to check hardwares.",
+    status: "Available",
+    target: "/tools/miscellaneous",
   },
 ];
 export default function ToolsPage() {

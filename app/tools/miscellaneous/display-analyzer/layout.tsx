@@ -11,13 +11,17 @@ export const metadata: Metadata = {
     'stuck pixel fixer',
     'display analyzer',
     'monitor screen test',
-    'check monitor health'
+    'check monitor health',
+    "Mindrainfo Display tester",
+    "mindrainfo displaytest",
+    "displaytest",
+    "displaypixeltest"
   ],
   openGraph: {
     title: 'Display Analyzer | Check Monitor Health',
     description: 'Find dead pixels, backlight bleed, and test color gradients in full-screen mode.',
     url: 'https://mindrainfo.in/tools/miscellaneous/display-analyzer',
-    siteName: 'YourSiteName',
+    siteName: 'Mindrainfo',
     images: [
       {
         url: '/og-display-analyzer.png', // Save an image showing the UI cards

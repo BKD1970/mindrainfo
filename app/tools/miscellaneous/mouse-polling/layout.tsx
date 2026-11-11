@@ -10,13 +10,17 @@ export const metadata: Metadata = {
     '1000hz mouse test',
     'mouse frequency tracker',
     'gaming mouse test',
-    'mouse performance test'
+    'mouse performance test',
+    "Mindrainfo mouse tester",
+    "mindrainfo mousetest",
+    "mousetest",
+    "mousetestonline",
   ],
   openGraph: {
     title: 'Mouse Polling Rate (Hz) Tester',
     description: 'Check your gaming mouse tracking speed and consistency in real-time.',
     url: 'https://mindrainfo.in/tools/miscellaneous/mouse-polling',
-    siteName: 'YourSiteName',
+    siteName: 'Mindrainfo',
     images: [
       {
         url: '/og-mouse-polling.png', 

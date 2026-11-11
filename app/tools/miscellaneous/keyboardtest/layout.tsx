@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     "laptop keyboard test",
     "Mac keyboard tester",
     "Windows keyboard tester",
+    "Mindrainfo Keyboard tester",
+    "mindrainfo keyboardtest",
+    "keyboadtest"
   ],
   alternates: {
     canonical: pageUrl,

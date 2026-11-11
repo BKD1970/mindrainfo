@@ -11,13 +11,18 @@ export const metadata: Metadata = {
     'webcam framerate test',
     'hardware diagnostic tool',
     'test camera online',
-    'check mic volume'
+    'check mic volume',
+    "Mindrainfo Camera Mic tester",
+    "mindrainfo cameratest",
+    "Camera test",
+    "mic test",
+    "microphone test",
   ],
   openGraph: {
     title: 'Hardware A/V Tester | Webcam & Mic',
     description: 'Verify your webcam resolution, framerate, and live microphone volume securely in your browser.',
     url: 'https://mindrainfo.in/tools/miscellaneous/camera-mic-test',
-    siteName: 'YourSiteName',
+    siteName: 'Mindrainfo',
     images: [
       {
         url: '/og-camera-mic.png', 

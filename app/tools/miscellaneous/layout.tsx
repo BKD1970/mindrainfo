@@ -12,13 +12,13 @@ export const metadata: Metadata = {
     'monitor dead pixel test',
     'webcam and mic tester',
     'gaming setup test',
-    'hardware debugging tools'
+    'hardware debugging tools',
   ],
   openGraph: {
     title: 'Ultimate Hardware Testing Tools Collection',
     description: 'Test your keyboard (NKRO), mouse polling rate (Hz), monitor backlight bleed, and webcam/mic instantly in your browser.',
-    url: 'https://mindrainfo.in/tools/miscellaneous', // REPLACE WITH YOUR ACTUAL URL
-    siteName: 'YourSiteName', // REPLACE WITH YOUR SITE NAME
+    url: 'https://mindrainfo.in/tools/miscellaneous', 
+    siteName: 'Mindrainfo', 
     images: [
       {
         url: '/og-misc-tools-catalog.png', // Save a cool screenshot of your catalog grid here
